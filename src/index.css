@@ -1,0 +1,232 @@
+ @import "tailwindcss";
+ :root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  text-align: left;
+  min-height: 100svh;
+  box-sizing: border-box;
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  letter-spacing: -1.68px;
+  margin: 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
+
+/* Theme global replacements for the requested #D4AF37 visual identity */
+:root {
+  --trading-gold: #D4AF37;
+  --trading-gold-soft: rgba(212, 175, 55, 0.2);
+  --trading-gold-border: rgba(212, 175, 55, 0.45);
+}
+
+.text-cyan-400,
+.text-cyan-500,
+.text-cyan-300,
+.hover\:text-cyan-400:hover,
+.hover\:text-cyan-300:hover,
+.hover\:text-cyan-500:hover,
+.text-cyan-600 {
+  color: var(--trading-gold) !important;
+}
+
+.bg-cyan-400,
+.bg-cyan-500\/20,
+.hover\:bg-cyan-400:hover,
+.hover\:bg-cyan-300:hover,
+.bg-cyan-500 {
+  background-color: var(--trading-gold) !important;
+}
+
+.border-cyan-400,
+.border-cyan-500,
+.hover\:border-cyan-400:hover,
+.hover\:border-cyan-500:hover,
+.focus\:border-cyan-400:focus {
+  border-color: var(--trading-gold) !important;
+}
+
+.bg-blue-600,
+.bg-blue-700,
+.hover\:bg-blue-700:hover,
+.text-blue-400,
+.focus\:border-blue-500:focus,
+.hover\:text-blue-400:hover {
+  color: var(--trading-gold) !important;
+  border-color: var(--trading-gold) !important;
+}
+
+.bg-blue-600,
+.bg-blue-700,
+.hover\:bg-blue-700:hover {
+  background-color: var(--trading-gold) !important;
+}
+
+.text-green-400,
+.text-green-500,
+.text-green-600,
+.bg-green-600,
+.hover\:bg-green-700:hover,
+.bg-green-500\/20,
+.text-emerald-400 {
+  color: var(--trading-gold) !important;
+}
+
+.bg-green-600,
+.hover\:bg-green-700:hover,
+.bg-green-500\/20 {
+  background-color: var(--trading-gold) !important;
+}
+
+.bg-slate-950,
+.bg-slate-900,
+.bg-slate-800,
+.bg-slate-700 {
+  background-color: #0f0f10 !important;
+}
+
+body,
+#root,
+main,
+section {
+  color: #f8f8f8;
+}
+
+button,
+.link,
+a,
+span,
+h1,
+h2,
+h3,
+label {
+  color: inherit;
+}
+
+.logo,
+.logo-text,
+.text-\[\#D4AF37\] {
+  color: var(--trading-gold) !important;
+}
+
+.bg-slate-950\/90 {
+  background-color: rgba(15, 15, 16, 0.94) !important;
+}
+
+.border-slate-800 {
+  border-color: var(--trading-gold-border) !important;
+}
+
+.border-slate-700 {
+  border-color: var(--trading-gold-border) !important;
+}
+
+.border-slate-800:hover,
+.border-slate-700:hover {
+  border-color: var(--trading-gold) !important;
+}
+
+.text-gray-400,
+.text-gray-300,
+.text-gray-500,
+.text-gray-600 {
+  color: #bfbfbf !important;
+}
+
+.text-white {
+  color: #fff !important;
+}
