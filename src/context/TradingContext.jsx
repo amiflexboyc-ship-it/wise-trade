@@ -13,7 +13,7 @@ import {
   saveUserWallet,
   saveOrder,
   getUserOrders,
-} from "../Services/firestoreService";
+} from "../services/firestoreService";
 
 const TradingContext = createContext();
 
