@@ -37,9 +37,7 @@ function TradingChart() {
   const coinName =
     symbol.replace("USDT", "");
 
-  // =====================================
   // CREATE CHART
-  // =====================================
 
   useEffect(() => {
     if (!chartContainer.current) {
@@ -54,7 +52,7 @@ function TradingChart() {
             chartContainer.current
               .clientWidth,
 
-          height: 400,
+          height: window.innerWidth < 640 ? 300 : 400,
 
           layout: {
             background: {
@@ -116,9 +114,7 @@ function TradingChart() {
     candleSeriesRef.current =
       candleSeries;
 
-    // =====================================
     // RESIZE
-    // =====================================
 
     const handleResize = () => {
       if (!chartContainer.current) {
@@ -126,10 +122,10 @@ function TradingChart() {
       }
 
       chart.applyOptions({
-        width:
-          chartContainer.current
-            .clientWidth,
+        width: chartContainer.current.clientWidth,
+        height: window.innerWidth < 640 ? 300 : 400,
       });
+
     };
 
     window.addEventListener(
@@ -137,9 +133,7 @@ function TradingChart() {
       handleResize
     );
 
-    // =====================================
     // CLEANUP
-    // =====================================
 
     return () => {
       window.removeEventListener(
@@ -156,9 +150,7 @@ function TradingChart() {
     };
   }, []);
 
-  // =====================================
   // LOAD BINANCE CANDLES
-  // =====================================
 
   useEffect(() => {
     let cancelled = false;
@@ -174,9 +166,7 @@ function TradingChart() {
           timeframe
         );
 
-        // =====================================
         // BINANCE API URL
-        // =====================================
 
         const url =
           `https://api.binance.com/api/v3/klines` +
@@ -205,9 +195,7 @@ function TradingChart() {
           return;
         }
 
-        // =====================================
         // CHECK BINANCE RESPONSE
-        // =====================================
 
         if (!Array.isArray(data)) {
           throw new Error(
@@ -215,9 +203,7 @@ function TradingChart() {
           );
         }
 
-        // =====================================
         // CONVERT CANDLES
-        // =====================================
 
         const candles =
           data.map((item) => ({
@@ -234,9 +220,7 @@ function TradingChart() {
             close: Number(item[4]),
           }));
 
-        // =====================================
         // UPDATE CHART
-        // =====================================
 
         if (
           candleSeriesRef.current
@@ -245,23 +229,19 @@ function TradingChart() {
             .setData(candles);
         }
 
-        // =====================================
         // UPDATE PRICE
-        // =====================================
 
         if (candles.length > 0) {
           const latest =
             candles[
-              candles.length - 1
+            candles.length - 1
             ];
 
           setPrice(
             latest.close
           );
 
-          // =====================================
           // PERCENTAGE CHANGE
-          // =====================================
 
           const first =
             candles[0].close;
@@ -276,9 +256,7 @@ function TradingChart() {
           );
         }
 
-        // =====================================
         // FIT CHART
-        // =====================================
 
         chartRef.current
           ?.timeScale()
@@ -322,9 +300,7 @@ function TradingChart() {
     timeframe,
   ]);
 
-  // =====================================
   // FORMAT PRICE
-  // =====================================
 
   const formatPrice = (value) => {
     if (
@@ -345,9 +321,7 @@ function TradingChart() {
     );
   };
 
-  // =====================================
   // TIMEFRAMES
-  // =====================================
 
   const timeframes = [
     {
@@ -381,17 +355,13 @@ function TradingChart() {
     },
   ];
 
-  // =====================================
   // RENDER
-  // =====================================
 
   return (
-    <div className="bg-[#0d0d0f] border border-[#D4AF37] rounded-xl p-4">
-
+    <div className="w-full min-w-0 overflow-hidden bg-[#0d0d0f] border border-[#D4AF37] rounded-xl p-3 sm:p-4">
       {/* HEADER */}
 
-      <div className="flex items-center justify-between mb-4">
-
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
 
           <h2 className="text-xl font-bold text-white">
@@ -402,12 +372,12 @@ function TradingChart() {
             {coinName === "BTC"
               ? "Bitcoin"
               : coinName === "ETH"
-              ? "Ethereum"
-              : coinName === "BNB"
-              ? "BNB"
-              : coinName === "SOL"
-              ? "Solana"
-              : coinName}
+                ? "Ethereum"
+                : coinName === "BNB"
+                  ? "BNB"
+                  : coinName === "SOL"
+                    ? "Solana"
+                    : coinName}
           </p>
 
         </div>
@@ -424,18 +394,17 @@ function TradingChart() {
           </div>
 
           <div
-            className={`text-sm font-semibold ${
-              change === null
-                ? "text-gray-400"
-                : change >= 0
+            className={`text-sm font-semibold ${change === null
+              ? "text-gray-400"
+              : change >= 0
                 ? "text-green-400"
                 : "text-red-400"
-            }`}
+              }`}
           >
             {change !== null
               ? `${change >= 0 ? "+" : ""}${change.toFixed(
-                  2
-                )}%`
+                2
+              )}%`
               : "--"}
           </div>
 
@@ -471,12 +440,11 @@ function TradingChart() {
                   item.value
                 )
               }
-              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
-                timeframe ===
+              className={`px-4 py-2 rounded-md text-sm font-medium transition ${timeframe ===
                 item.value
-                  ? "bg-[#D4AF37] text-black"
-                  : "bg-slate-800 text-gray-300 hover:bg-slate-700"
-              }`}
+                ? "bg-[#D4AF37] text-black"
+                : "bg-slate-800 text-gray-300 hover:bg-slate-700"
+                }`}
             >
               {item.label}
             </button>
@@ -527,7 +495,7 @@ function TradingChart() {
 
         <div
           ref={chartContainer}
-          className="w-full"
+          className="w-full min-w-0 overflow-hidden"
         />
 
       </div>
