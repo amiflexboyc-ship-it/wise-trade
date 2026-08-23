@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import ProtectedRoute from "./components/ProtectedRoute";
 import Orders from "./pages/Orders";
 import Dashboard from "./pages/Dashboard";
 import Sidebar from "./components/Sidebar";
@@ -48,7 +49,18 @@ function App() {
         {/* AUTH */}
         <Route path="/login" element={<Loging />} />
         <Route path="/register" element={<Register />} />
+        <Route
+          path="/dashboard"
+          element={
+            <div className="flex min-h-screen bg-slate-950 text-white">
+              <Sidebar />
 
+              <main className="flex-1">
+                <Dashboard />
+              </main>
+            </div>
+          }
+        />
         {/* DASHBOARD */}
         <Route
           path="/dashboard"
