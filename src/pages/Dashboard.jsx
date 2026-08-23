@@ -114,6 +114,19 @@ function Dashboard() {
   const portfolioValue =
     usdt + cryptoValue;
 
+  // PROFIT / LOSS
+
+  const initialBalance =
+    Number(wallet?.initialBalance || 10000);
+
+  const profitLoss =
+    portfolioValue - initialBalance;
+
+  const profitLossPercentage =
+    initialBalance > 0
+      ? (profitLoss / initialBalance) * 100
+      : 0;
+
   // TOTAL ASSETS
 
   const totalAssets = 5;
@@ -151,6 +164,41 @@ function Dashboard() {
       {/* ==PORTFOLIO SUMMARY=== */}
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {/* PROFIT / LOSS */}
+
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+
+          <p className="text-slate-400">
+            Profit / Loss
+          </p>
+
+          <p
+            className={`text-2xl font-bold mt-2 ${profitLoss >= 0
+              ? "text-green-400"
+              : "text-red-400"
+              }`}
+          >
+            {profitLoss >= 0 ? "+" : "-"}$
+            {Math.abs(profitLoss).toLocaleString(
+              undefined,
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }
+            )}
+          </p>
+
+          <p
+            className={`text-xs mt-2 ${profitLoss >= 0
+              ? "text-green-400"
+              : "text-red-400"
+              }`}
+          >
+            {profitLoss >= 0 ? "+" : ""}
+            {profitLossPercentage.toFixed(2)}%
+          </p>
+
+        </div>
 
         {/* TOTAL BALANCE */}
 

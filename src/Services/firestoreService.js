@@ -29,6 +29,7 @@ export async function getUserWallet(userId) {
   }
 
   const newWallet = {
+    initialBalance: 10000,
     USDT: 10000,
     BTC: 0,
     ETH: 0,
