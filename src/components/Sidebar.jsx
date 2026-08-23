@@ -51,6 +51,8 @@ function Sidebar() {
     <aside
       className="
         w-full
+        min-w-0
+        overflow-hidden
         bg-slate-950
         border-b
         border-slate-800
@@ -80,14 +82,18 @@ function Sidebar() {
 
       <nav
         className="
-          flex
-          gap-2
-          overflow-x-auto
+       flex
+       w-full
+       min-w-0
+       gap-2
+       overflow-x-auto
+       pb-1
 
-          md:flex-col
-          md:gap-2
-          md:overflow-visible
-        "
+       md:flex-col
+       md:gap-2
+       md:overflow-visible
+       md:pb-0
+     "
       >
 
         {links.map((link) => {
@@ -110,10 +116,9 @@ function Sidebar() {
                 py-3
                 transition
 
-                ${
-                  active
-                    ? "bg-[#D4AF37] text-black"
-                    : "text-gray-400 hover:bg-slate-900 hover:text-white"
+                ${active
+                  ? "bg-[#D4AF37] text-black"
+                  : "text-gray-400 hover:bg-slate-900 hover:text-white"
                 }
               `}
             >
