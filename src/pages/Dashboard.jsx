@@ -8,6 +8,8 @@ import TradePanel from "../coponet/TradePanel";
 import { useTrading } from "../context/TradingContext";
 import { getMarketPrices } from "../services/marketApi";
 
+
+
 function Dashboard() {
   const { wallet, user } = useTrading();
 
