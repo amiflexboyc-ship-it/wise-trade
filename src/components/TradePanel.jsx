@@ -195,12 +195,10 @@ function TradePanel() {
   }
 
   return (
-    <div className="h-full bg-slate-900 border border-slate-800 rounded-xl p-5 text-white">
-
+    <div className="w-full min-w-0 h-full overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 text-white">
       {/* HEADER */}
 
-      <div className="flex justify-between items-center mb-6">
-
+      <div className="flex flex-wrap justify-between items-center gap-2 mb-6">
         <h2 className="text-2xl font-bold">
           {asset} / USDT
         </h2>
@@ -213,15 +211,14 @@ function TradePanel() {
 
       {/* BALANCES */}
 
-      <div className="bg-slate-950 rounded-lg p-4 mb-5">
-
+      <div className="w-full min-w-0 bg-slate-950 rounded-lg p-4 mb-5">
         <p className="text-gray-400 text-sm">
           Available USDT
         </p>
 
-        <p className="text-[#D4AF37] text-xl font-bold">
+        <span className="block max-w-full break-words text-[#D4AF37] font-bold">
           ${usdtBalance.toFixed(2)}
-        </p>
+        </span>
 
         <p className="text-gray-400 text-sm mt-3">
           {asset} Balance
