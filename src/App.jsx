@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
-import Sidebar from "./coponet/Sidebar";
+import Sidebar from "./components/Sidebar";
 
 
 
@@ -14,13 +14,13 @@ import Trade from "./pages/Trade";
 import Wallet from "./pages/Wallet";
 import Profile from "./pages/Profile";
 
-import Navbar from "./coponet/Navbar";
-import Hero from "./coponet/Hero";
-import Markets from "./coponet/markets";
-import TradingChart from "./coponet/TradingChart";
-import Features from "./coponet/Features";
-import About from "./coponet/About";
-import Footer from "./coponet/Footer";
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+import Markets from "./components/markets";
+import TradingChart from "./components/TradingChart";
+import Features from "./components/Features";
+import About from "./components/About";
+import Footer from "./components/Footer";
 
 
 function App() {

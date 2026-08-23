@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-import OrderHistory from "../coponet/OrderHistory";
-import TradingChart from "../coponet/TradingChart";
-import MarketWatch from "../coponet/MarketWatch";
-import TradePanel from "../coponet/TradePanel";
+import OrderHistory from "../components/OrderHistory";
+import TradingChart from "../components/TradingChart";
+import MarketWatch from "../components/MarketWatch";
+import TradePanel from "../components/TradePanel";
 
 import { useTrading } from "../context/TradingContext";
 import { getMarketPrices } from "../services/marketApi";

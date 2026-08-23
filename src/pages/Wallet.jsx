@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import WalletActions from "../coponet/WalletActions";
-import OrderHistory from "../coponet/OrderHistory";
+import WalletActions from "../components/WalletActions";
+import OrderHistory from "../components/OrderHistory";
 import { useTrading } from "../context/TradingContext";
 import { getMarketPrices } from "../services/marketApi";
 

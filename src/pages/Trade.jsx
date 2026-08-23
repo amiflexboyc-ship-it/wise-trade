@@ -1,4 +1,4 @@
-import TradePanel from "../coponet/TradePanel";
+import TradePanel from "../components/TradePanel";
 
 function Trade() {
   return (
