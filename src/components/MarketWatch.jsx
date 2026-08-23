@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getMarketPrices } from "../services/marketApi";
+import { getMarketPrices } from "../services/MarketApi";
 import { useTrading } from "../context/TradingContext";
 
 function MarketWatch() {

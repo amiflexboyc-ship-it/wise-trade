@@ -6,7 +6,7 @@ import MarketWatch from "../components/MarketWatch";
 import TradePanel from "../components/TradePanel";
 
 import { useTrading } from "../context/TradingContext";
-import { getMarketPrices } from "../services/marketApi";
+import { getMarketPrices } from "../services/MarketApi";
 
 
 

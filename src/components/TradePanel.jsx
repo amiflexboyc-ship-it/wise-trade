@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTrading } from "../context/TradingContext";
-import { getMarketPrices } from "../services/marketApi";
+import { getMarketPrices } from "../services/MarketApi";
 
 
 

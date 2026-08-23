@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import WalletActions from "../components/WalletActions";
 import OrderHistory from "../components/OrderHistory";
 import { useTrading } from "../context/TradingContext";
-import { getMarketPrices } from "../services/marketApi";
+import { getMarketPrices } from "../services/MarketApi";
 
 function Wallet() {
   const { wallet, loading } = useTrading();
