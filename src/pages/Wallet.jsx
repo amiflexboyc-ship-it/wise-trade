@@ -4,6 +4,8 @@ import OrderHistory from "../components/OrderHistory";
 import { useTrading } from "../context/TradingContext";
 import { getMarketPrices } from "../services/MarketApi";
 
+
+
 function Wallet() {
   const { wallet, loading } = useTrading();
 
