@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import Orders from "./pages/Orders";
 import Dashboard from "./pages/Dashboard";
 import Sidebar from "./components/Sidebar";
 
@@ -100,7 +101,20 @@ function App() {
             </div>
           }
         />
+        {/* ORDERS */}
 
+        <Route
+          path="/orders"
+          element={
+            <div className="flex min-h-screen bg-slate-950 text-white">
+              <Sidebar />
+
+              <main className="flex-1">
+                <Orders />
+              </main>
+            </div>
+          }
+        />
         {/* PROFILE */}
         <Route
           path="/profile"

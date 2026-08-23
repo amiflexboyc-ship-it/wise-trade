@@ -4,8 +4,9 @@ import {
   Wallet,
   Settings,
   LogOut,
-} from "lucide-react";
+  ClipboardList,
 
+} from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 
@@ -39,6 +40,11 @@ function Sidebar() {
       name: "Wallet",
       path: "/wallet",
       icon: Wallet,
+    },
+    {
+      name: "Orders",
+      path: "/orders",
+      icon: ClipboardList,
     },
     {
       name: "Settings",
