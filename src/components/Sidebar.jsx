@@ -5,12 +5,16 @@ import {
   Settings,
   LogOut,
   ClipboardList,
-
 } from "lucide-react";
+
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 
 function Sidebar() {
   const navigate = useNavigate();
@@ -34,6 +38,11 @@ function Sidebar() {
     {
       name: "Markets",
       path: "/market",
+      icon: ChartCandlestick,
+    },
+    {
+      name: "Trade",
+      path: "/trade",
       icon: ChartCandlestick,
     },
     {
@@ -71,7 +80,6 @@ function Sidebar() {
         md:p-5
       "
     >
-
       {/* LOGO */}
 
       <div className="mb-5 md:mb-10">
@@ -88,20 +96,19 @@ function Sidebar() {
 
       <nav
         className="
-       flex
-       w-full
-       min-w-0
-       gap-2
-       overflow-x-auto
-       pb-1
+          flex
+          w-full
+          min-w-0
+          gap-2
+          overflow-x-auto
+          pb-1
 
-       md:flex-col
-       md:gap-2
-       md:overflow-visible
-       md:pb-0
-     "
+          md:flex-col
+          md:gap-2
+          md:overflow-visible
+          md:pb-0
+        "
       >
-
         {links.map((link) => {
           const Icon = link.icon;
 
@@ -122,9 +129,10 @@ function Sidebar() {
                 py-3
                 transition
 
-                ${active
-                  ? "bg-[#D4AF37] text-black"
-                  : "text-gray-400 hover:bg-slate-900 hover:text-white"
+                ${
+                  active
+                    ? "bg-[#D4AF37] text-black"
+                    : "text-gray-400 hover:bg-slate-900 hover:text-white"
                 }
               `}
             >
@@ -165,9 +173,7 @@ function Sidebar() {
             Logout
           </span>
         </button>
-
       </nav>
-
     </aside>
   );
 }

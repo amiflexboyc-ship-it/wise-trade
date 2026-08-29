@@ -1,16 +1,16 @@
+
 import { useEffect, useState } from "react";
 import { useTrading } from "../context/TradingContext";
 import { getMarketPrices } from "../Services/MarketApi";
 
-
 function TradePanel() {
-
   const {
     wallet,
     buyAsset,
     sellAsset,
     loading,
     selectedSymbol,
+    setSelectedSymbol,
   } = useTrading();
 
   const [side, setSide] = useState("BUY");
@@ -23,17 +23,46 @@ function TradePanel() {
   const [price, setPrice] = useState(0);
   const [priceLoading, setPriceLoading] = useState(true);
 
+  // SUPPORTED ASSETS
+
+  const assets = [
+    {
+      symbol: "BTCUSDT",
+      name: "Bitcoin",
+      short: "BTC",
+    },
+    {
+      symbol: "ETHUSDT",
+      name: "Ethereum",
+      short: "ETH",
+    },
+    {
+      symbol: "BNBUSDT",
+      name: "BNB",
+      short: "BNB",
+    },
+    {
+      symbol: "SOLUSDT",
+      name: "Solana",
+      short: "SOL",
+    },
+  ];
 
   // SELECTED ASSET
 
-  const asset = selectedSymbol.replace(
-    "USDT",
-    ""
-  );
+  const selectedAsset =
+    assets.find(
+      (item) =>
+        item.symbol === selectedSymbol
+    ) || assets[0];
+
+  const asset = selectedAsset.short;
 
   // GET LIVE PRICE
 
   useEffect(() => {
+    let mounted = true;
+
     const loadPrice = async () => {
       try {
         setPriceLoading(true);
@@ -47,7 +76,10 @@ function TradePanel() {
               coin.symbol === selectedSymbol
           );
 
-        if (selectedCoin) {
+        if (
+          selectedCoin &&
+          mounted
+        ) {
           setPrice(
             Number(selectedCoin.price)
           );
@@ -57,22 +89,41 @@ function TradePanel() {
           "Market price error:",
           error
         );
+
+        if (mounted) {
+          setPrice(0);
+        }
       } finally {
-        setPriceLoading(false);
+        if (mounted) {
+          setPriceLoading(false);
+        }
       }
     };
 
     loadPrice();
 
-    const interval =
-      setInterval(
-        loadPrice,
-        5000
-      );
+    const interval = setInterval(
+      loadPrice,
+      5000
+    );
 
-    return () =>
+    return () => {
+      mounted = false;
       clearInterval(interval);
+    };
   }, [selectedSymbol]);
+
+  // CHANGE ASSET
+
+  const handleAssetChange = (symbol) => {
+    if (trading) return;
+
+    setSelectedSymbol(symbol);
+    setAmount("");
+    setMessage("");
+    setMessageType("");
+    setPrice(0);
+  };
 
   // CALCULATIONS
 
@@ -88,7 +139,7 @@ function TradePanel() {
   const usdtBalance =
     Number(wallet?.USDT || 0);
 
-  // BUY / SELL
+  // TRADE
 
   const handleTrade = async () => {
     if (trading) return;
@@ -96,29 +147,33 @@ function TradePanel() {
     setMessage("");
     setMessageType("");
 
-    if (price <= 0) {
-      setMessage("Market price is not available yet.");
+    if (!price || price <= 0) {
+      setMessage(
+        "Market price is not available yet."
+      );
       setMessageType("error");
       return;
     }
 
     if (amountNumber <= 0) {
-      setMessage(`Enter a valid ${asset} amount.`);
+      setMessage(
+        `Enter a valid ${asset} amount.`
+      );
       setMessageType("error");
       return;
     }
 
-    // BUY CHECK
     if (
       side === "BUY" &&
       total > usdtBalance
     ) {
-      setMessage("Insufficient USDT balance.");
+      setMessage(
+        "Insufficient USDT balance."
+      );
       setMessageType("error");
       return;
     }
 
-    // SELL CHECK
     if (
       side === "SELL" &&
       amountNumber > assetBalance
@@ -149,23 +204,19 @@ function TradePanel() {
         );
       }
 
-      console.log(
-        "TRADE RESULT:",
-        result
-      );
-
       if (result?.success) {
-        setMessage(result.message);
+        setMessage(
+          result.message
+        );
         setMessageType("success");
         setAmount("");
       } else {
         setMessage(
           result?.message ||
-          "Trade failed."
+            "Trade failed."
         );
         setMessageType("error");
       }
-
     } catch (error) {
       console.error(
         "TRADE ERROR:",
@@ -174,11 +225,9 @@ function TradePanel() {
 
       setMessage(
         error?.message ||
-        "Something went wrong."
+          "Something went wrong."
       );
-
       setMessageType("error");
-
     } finally {
       setTrading(false);
     }
@@ -188,64 +237,115 @@ function TradePanel() {
 
   if (loading) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-white">
+      <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-white">
         Loading trading account...
       </div>
     );
   }
 
   return (
-    <div className="w-full min-w-0 h-full overflow-hidden bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 text-white">
+    <div className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-4 text-white sm:p-5">
+
       {/* HEADER */}
 
-      <div className="flex flex-wrap justify-between items-center gap-2 mb-6">
-        <h2 className="text-2xl font-bold">
-          {asset} / USDT
-        </h2>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs uppercase tracking-wider text-gray-500">
+            Trade
+          </p>
 
-        <span className="text-xs text-green-400">
+          <h2 className="text-2xl font-bold">
+            {asset}/USDT
+          </h2>
+        </div>
+
+        <span className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-400">
           PAPER TRADING
         </span>
+      </div>
 
+      {/* ASSET SELECTOR */}
+
+      <div className="mb-5">
+
+        <p className="mb-2 text-sm text-gray-400">
+          Select Asset
+        </p>
+
+        <div className="grid grid-cols-2 gap-2">
+
+          {assets.map((item) => (
+            <button
+              key={item.symbol}
+              type="button"
+              disabled={trading}
+              onClick={() =>
+                handleAssetChange(
+                  item.symbol
+                )
+              }
+              className={`rounded-lg border p-3 text-left transition ${
+                selectedSymbol ===
+                item.symbol
+                  ? "border-[#D4AF37] bg-[#D4AF37]/10"
+                  : "border-slate-800 bg-slate-950 hover:border-slate-700"
+              }`}
+            >
+              <p
+                className={`font-bold ${
+                  selectedSymbol ===
+                  item.symbol
+                    ? "text-[#D4AF37]"
+                    : "text-white"
+                }`}
+              >
+                {item.short}
+              </p>
+
+              <p className="text-xs text-gray-500">
+                {item.name}
+              </p>
+            </button>
+          ))}
+
+        </div>
       </div>
 
       {/* BALANCES */}
 
-      <div className="w-full min-w-0 bg-slate-950 rounded-lg p-4 mb-5">
-        <p className="text-gray-400 text-sm">
-          Available USDT
-        </p>
+      <div className="mb-5 w-full rounded-lg bg-slate-950 p-4">
 
-        <span className="block max-w-full break-words text-[#D4AF37] font-bold">
-          ${usdtBalance.toFixed(2)}
-        </span>
+        <div className="flex justify-between gap-3">
+          <p className="text-sm text-gray-400">
+            Available USDT
+          </p>
 
-        <p className="text-gray-400 text-sm mt-3">
-          {asset} Balance
-        </p>
+          <p className="font-bold text-[#D4AF37]">
+            ${usdtBalance.toFixed(2)}
+          </p>
+        </div>
 
-        <p className="text-white text-xl font-bold">
-          {assetBalance.toFixed(6)} {asset}
-        </p>
+        <div className="mt-3 flex justify-between gap-3">
+          <p className="text-sm text-gray-400">
+            {asset} Balance
+          </p>
+
+          <p className="font-bold text-white">
+            {assetBalance.toFixed(6)} {asset}
+          </p>
+        </div>
 
       </div>
 
-
-      {/* TRADE MESSAGE */}
+      {/* MESSAGE */}
 
       {message && (
         <div
-          className={`
-      mb-5
-      p-4
-      rounded-lg
-      border
-
-      ${messageType === "success"
-              ? "bg-green-500/10 border-green-500/30 text-green-400"
-              : "bg-red-500/10 border-red-500/30 text-red-400"
-            }
-    `}
+          className={`mb-5 rounded-lg border p-4 ${
+            messageType === "success"
+              ? "border-green-500/30 bg-green-500/10 text-green-400"
+              : "border-red-500/30 bg-red-500/10 text-red-400"
+          }`}
         >
           <p className="font-semibold">
             {messageType === "success"
@@ -253,35 +353,44 @@ function TradePanel() {
               : "Trade Failed"}
           </p>
 
-          <p className="text-sm mt-1">
+          <p className="mt-1 text-sm">
             {message}
           </p>
         </div>
       )}
 
-
       {/* BUY / SELL */}
 
-      <div className="grid grid-cols-2 gap-2 mb-5">
+      <div className="mb-5 grid grid-cols-2 gap-2">
 
         <button
           type="button"
-          onClick={() => setSide("BUY")}
-          className={`py-3 rounded-lg font-bold ${side === "BUY"
-            ? "bg-[#D4AF37] text-black"
-            : "bg-slate-800 text-gray-400"
-            }`}
+          disabled={trading}
+          onClick={() => {
+            setSide("BUY");
+            setMessage("");
+          }}
+          className={`rounded-lg py-3 font-bold transition ${
+            side === "BUY"
+              ? "bg-[#D4AF37] text-black"
+              : "bg-slate-800 text-gray-400 hover:bg-slate-700"
+          }`}
         >
           BUY
         </button>
 
         <button
           type="button"
-          onClick={() => setSide("SELL")}
-          className={`py-3 rounded-lg font-bold ${side === "SELL"
-            ? "bg-red-600 text-white"
-            : "bg-slate-800 text-gray-400"
-            }`}
+          disabled={trading}
+          onClick={() => {
+            setSide("SELL");
+            setMessage("");
+          }}
+          className={`rounded-lg py-3 font-bold transition ${
+            side === "SELL"
+              ? "bg-red-600 text-white"
+              : "bg-slate-800 text-gray-400 hover:bg-slate-700"
+          }`}
         >
           SELL
         </button>
@@ -292,30 +401,35 @@ function TradePanel() {
 
       <div className="mb-5">
 
-        <label className="block text-gray-400 text-sm mb-2">
+        <label className="mb-2 block text-sm text-gray-400">
           {asset} Live Price
         </label>
 
         {priceLoading ? (
           <div className="flex items-center gap-2 text-gray-400">
-            <div className="w-4 h-4 border-2 border-gray-500 border-t-[#D4AF37] rounded-full animate-spin"></div>
+
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-[#D4AF37]" />
 
             <span>
               Loading market price...
             </span>
+
           </div>
         ) : price > 0 ? (
-          <span className="text-[#D4AF37] font-bold">
+          <p className="text-xl font-bold text-[#D4AF37]">
             $
-            {price.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </span>
+            {price.toLocaleString(
+              undefined,
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }
+            )}
+          </p>
         ) : (
-          <div className="text-red-400">
+          <p className="text-red-400">
             Market price unavailable
-          </div>
+          </p>
         )}
 
       </div>
@@ -324,7 +438,7 @@ function TradePanel() {
 
       <div className="mb-5">
 
-        <label className="block text-gray-400 text-sm mb-2">
+        <label className="mb-2 block text-sm text-gray-400">
           Amount ({asset})
         </label>
 
@@ -333,38 +447,40 @@ function TradePanel() {
           min="0"
           step="0.000001"
           value={amount}
+          disabled={trading}
           onChange={(e) =>
-            setAmount(
-              e.target.value
-            )
+            setAmount(e.target.value)
           }
+          onKeyDown={(e) => {
+            if (
+              e.key === "Enter"
+            ) {
+              handleTrade();
+            }
+          }}
           placeholder="0.01"
-          className="
-            w-full
-            bg-slate-950
-            border
-            border-slate-800
-            rounded-lg
-            p-3
-            text-white
-            outline-none
-            focus:border-[#D4AF37]
-          "
+          className="w-full rounded-lg border border-slate-800 bg-slate-950 p-3 text-white outline-none focus:border-[#D4AF37] disabled:opacity-50"
         />
 
       </div>
 
       {/* TOTAL */}
 
-      <div className="flex justify-between bg-slate-950 rounded-lg p-4 mb-5">
+      <div className="mb-5 flex justify-between rounded-lg bg-slate-950 p-4">
 
         <span className="text-gray-400">
           Total
         </span>
 
-        <span className="font-bold">
+        <span className="font-bold text-white">
           $
-          {total.toFixed(2)}
+          {total.toLocaleString(
+            undefined,
+            {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }
+          )}
         </span>
 
       </div>
@@ -379,24 +495,32 @@ function TradePanel() {
           amountNumber <= 0 ||
           price <= 0
         }
-        className={`w-full py-3 rounded-lg font-bold transition ${trading ||
+        className={`w-full rounded-lg py-3 font-bold transition ${
+          trading ||
           amountNumber <= 0 ||
           price <= 0
-          ? "bg-slate-700 text-gray-500 cursor-not-allowed"
-          : side === "BUY"
+            ? "cursor-not-allowed bg-slate-700 text-gray-500"
+            : side === "BUY"
             ? "bg-[#D4AF37] text-black hover:bg-[#f0c94d]"
             : "bg-red-600 text-white hover:bg-red-700"
-          }`}
+        }`}
       >
         {trading
           ? "Processing..."
           : side === "BUY"
-            ? `BUY ${asset}`
-            : `SELL ${asset}`}
+          ? `BUY ${asset}`
+          : `SELL ${asset}`}
       </button>
+
+      {/* NOTICE */}
+
+      <p className="mt-4 text-center text-xs text-gray-500">
+        Paper trading only. No real funds are used.
+      </p>
 
     </div>
   );
 }
 
 export default TradePanel;
+

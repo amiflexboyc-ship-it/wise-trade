@@ -1,5 +1,7 @@
+
 import { useEffect, useState } from "react";
 
+import TransactionHistory from "../components/TransactionHistory";
 import OrderHistory from "../components/OrderHistory";
 import TradingChart from "../components/TradingChart";
 import MarketWatch from "../components/MarketWatch";
@@ -8,25 +10,35 @@ import TradePanel from "../components/TradePanel";
 import { useTrading } from "../context/TradingContext";
 import { getMarketPrices } from "../Services/MarketApi";
 
-
 function Dashboard() {
   const { wallet, user } = useTrading();
 
   const [markets, setMarkets] = useState([]);
+  const [marketLoading, setMarketLoading] =
+    useState(true);
 
   // LIVE MARKET PRICES
 
   useEffect(() => {
+    let mounted = true;
+
     const loadMarkets = async () => {
       try {
         const data = await getMarketPrices();
 
-        setMarkets(data);
+        if (mounted) {
+          setMarkets(data || []);
+          setMarketLoading(false);
+        }
       } catch (error) {
         console.error(
           "Dashboard Market Error:",
           error
         );
+
+        if (mounted) {
+          setMarketLoading(false);
+        }
       }
     };
 
@@ -37,7 +49,10 @@ function Dashboard() {
       5000
     );
 
-    return () => clearInterval(interval);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // WALLET BALANCES
@@ -117,315 +132,358 @@ function Dashboard() {
   // PROFIT / LOSS
 
   const initialBalance =
-    Number(wallet?.initialBalance || 10000);
+    Number(
+      wallet?.initialBalance || 10000
+    );
 
   const profitLoss =
-    portfolioValue - initialBalance;
+    portfolioValue -
+    initialBalance;
 
   const profitLossPercentage =
     initialBalance > 0
-      ? (profitLoss / initialBalance) * 100
+      ? (profitLoss / initialBalance) *
+        100
       : 0;
 
-  // TOTAL ASSETS
+  // FORMAT MONEY
+
+  const formatMoney = (value) => {
+    return Number(value || 0).toLocaleString(
+      undefined,
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }
+    );
+  };
+
+  // ASSETS
 
   const totalAssets = 5;
 
   return (
     <div className="min-h-screen w-full bg-slate-950 px-4 py-6 text-white sm:px-6 lg:px-8">
 
-      {/* HEADER */}
+      <div className="mx-auto max-w-[1600px]">
 
-      <header className="flex flex-col gap-2 border-b border-slate-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
+        {/* ================================= */}
+        {/* HEADER */}
+        {/* ================================= */}
 
-        <div>
+        <header className="flex flex-col gap-4 border-b border-slate-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
 
-          <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#D4AF37]">
-            Overview
-          </p>
+          <div>
 
-          <h1 className="mt-1 text-3xl font-bold text-white sm:text-4xl">
-            Dashboard
-          </h1>
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-[#D4AF37]">
+              Overview
+            </p>
 
-          <p className="mt-2 text-slate-400">
-            Welcome back,{" "}
-            {user?.email || "Trader"}
-          </p>
+            <h1 className="mt-1 text-3xl font-bold sm:text-4xl">
+              Dashboard
+            </h1>
 
-        </div>
+            <p className="mt-2 text-slate-400">
+              Welcome back,{" "}
+              <span className="text-slate-300">
+                {user?.email || "Trader"}
+              </span>
+            </p>
 
-        <p className="text-sm text-slate-400">
-          Paper trading account
-        </p>
+          </div>
 
-      </header>
+          {/* MARKET STATUS */}
 
-      {/* ==PORTFOLIO SUMMARY=== */}
+          <div className="flex items-center gap-2 text-sm">
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {/* PROFIT / LOSS */}
-
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-
-          <p className="text-slate-400">
-            Profit / Loss
-          </p>
-
-          <p
-            className={`text-2xl font-bold mt-2 ${profitLoss >= 0
-              ? "text-green-400"
-              : "text-red-400"
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${
+                marketLoading
+                  ? "bg-yellow-400 animate-pulse"
+                  : "bg-green-400"
               }`}
-          >
-            {profitLoss >= 0 ? "+" : "-"}$
-            {Math.abs(profitLoss).toLocaleString(
-              undefined,
-              {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }
-            )}
-          </p>
+            />
 
-          <p
-            className={`text-xs mt-2 ${profitLoss >= 0
-              ? "text-green-400"
-              : "text-red-400"
+            <span className="text-slate-400">
+              {marketLoading
+                ? "Updating markets..."
+                : "Markets live"}
+            </span>
+
+          </div>
+
+        </header>
+
+        {/* ================================= */}
+        {/* PORTFOLIO SUMMARY */}
+        {/* ================================= */}
+
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+
+          {/* PROFIT / LOSS */}
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+
+            <p className="text-slate-400">
+              Profit / Loss
+            </p>
+
+            <p
+              className={`mt-2 text-2xl font-bold ${
+                profitLoss >= 0
+                  ? "text-green-400"
+                  : "text-red-400"
               }`}
-          >
-            {profitLoss >= 0 ? "+" : ""}
-            {profitLossPercentage.toFixed(2)}%
-          </p>
-
-        </div>
-
-        {/* TOTAL BALANCE */}
-
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-
-          <p className="text-slate-400">
-            Total Balance
-          </p>
-
-          <p className="text-3xl text-[#D4AF37] font-bold mt-2">
-            $
-            {portfolioValue.toLocaleString(
-              undefined,
-              {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }
-            )}
-          </p>
-
-          <p className="text-xs text-slate-500 mt-2">
-            USDT + Crypto
-          </p>
-
-        </div>
-
-        {/* AVAILABLE USDT */}
-
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-
-          <p className="text-slate-400">
-            Available USDT
-          </p>
-
-          <p className="text-2xl text-white font-bold mt-2">
-            $
-            {usdt.toLocaleString(
-              undefined,
-              {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }
-            )}
-          </p>
-
-          <p className="text-xs text-slate-500 mt-2">
-            Ready to trade
-          </p>
-
-        </div>
-
-        {/* CRYPTO VALUE */}
-
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-
-          <p className="text-slate-400">
-            Crypto Value
-          </p>
-
-          <p className="text-2xl text-green-400 font-bold mt-2">
-            $
-            {cryptoValue.toLocaleString(
-              undefined,
-              {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }
-            )}
-          </p>
-
-          <p className="text-xs text-slate-500 mt-2">
-            BTC + ETH + BNB + SOL
-          </p>
-
-        </div>
-
-        {/* TOTAL ASSETS */}
-
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-
-          <p className="text-slate-400">
-            Total Assets
-          </p>
-
-          <p className="text-3xl text-white font-bold mt-2">
-            {totalAssets}
-          </p>
-
-          <p className="text-xs text-slate-500 mt-2">
-            Supported currencies
-          </p>
-
-        </div>
-
-      </div>
-
-      {/* ===ASSET BREAKDOWN====== */}
-
-      <div className="mt-6 bg-slate-900 border border-slate-800 rounded-xl p-5">
-
-        <h2 className="text-xl font-bold mb-5">
-          Portfolio Breakdown
-        </h2>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
-          {/* BTC */}
-
-          <div className="bg-slate-950 rounded-lg p-4">
-
-            <p className="text-gray-400 text-sm">
-              BTC
-            </p>
-
-            <p className="text-lg font-bold mt-1">
-              {btc.toFixed(6)} BTC
-            </p>
-
-            <p className="text-[#D4AF37] text-sm mt-1">
+            >
+              {profitLoss >= 0
+                ? "+"
+                : "-"}
               $
-              {btcValue.toLocaleString(
-                undefined,
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }
+              {formatMoney(
+                Math.abs(profitLoss)
               )}
+            </p>
+
+            <p
+              className={`mt-2 text-xs ${
+                profitLoss >= 0
+                  ? "text-green-400"
+                  : "text-red-400"
+              }`}
+            >
+              {profitLoss >= 0
+                ? "+"
+                : ""}
+              {profitLossPercentage.toFixed(
+                2
+              )}
+              %
             </p>
 
           </div>
 
-          {/* ETH */}
+          {/* TOTAL BALANCE */}
 
-          <div className="bg-slate-950 rounded-lg p-4">
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
 
-            <p className="text-gray-400 text-sm">
-              ETH
+            <p className="text-slate-400">
+              Total Balance
             </p>
 
-            <p className="text-lg font-bold mt-1">
-              {eth.toFixed(6)} ETH
-            </p>
-
-            <p className="text-[#D4AF37] text-sm mt-1">
+            <p className="mt-2 text-3xl font-bold text-[#D4AF37]">
               $
-              {ethValue.toLocaleString(
-                undefined,
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }
+              {formatMoney(
+                portfolioValue
               )}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-500">
+              USDT + Crypto
             </p>
 
           </div>
 
-          {/* BNB */}
+          {/* AVAILABLE USDT */}
 
-          <div className="bg-slate-950 rounded-lg p-4">
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
 
-            <p className="text-gray-400 text-sm">
-              BNB
+            <p className="text-slate-400">
+              Available USDT
             </p>
 
-            <p className="text-lg font-bold mt-1">
-              {bnb.toFixed(6)} BNB
-            </p>
-
-            <p className="text-[#D4AF37] text-sm mt-1">
+            <p className="mt-2 text-2xl font-bold text-white">
               $
-              {bnbValue.toLocaleString(
-                undefined,
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }
-              )}
+              {formatMoney(usdt)}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-500">
+              Ready to trade
             </p>
 
           </div>
 
-          {/* SOL */}
+          {/* CRYPTO VALUE */}
 
-          <div className="bg-slate-950 rounded-lg p-4">
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
 
-            <p className="text-gray-400 text-sm">
-              SOL
+            <p className="text-slate-400">
+              Crypto Value
             </p>
 
-            <p className="text-lg font-bold mt-1">
-              {sol.toFixed(6)} SOL
-            </p>
-
-            <p className="text-[#D4AF37] text-sm mt-1">
+            <p className="mt-2 text-2xl font-bold text-green-400">
               $
-              {solValue.toLocaleString(
-                undefined,
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }
+              {formatMoney(
+                cryptoValue
               )}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-500">
+              BTC + ETH + BNB + SOL
+            </p>
+
+          </div>
+
+          {/* TOTAL ASSETS */}
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+
+            <p className="text-slate-400">
+              Total Assets
+            </p>
+
+            <p className="mt-2 text-3xl font-bold text-white">
+              {totalAssets}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-500">
+              Supported currencies
             </p>
 
           </div>
 
         </div>
 
-      </div>
+        {/* ================================= */}
+        {/* PORTFOLIO BREAKDOWN */}
+        {/* ================================= */}
 
+        <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900 p-5">
 
-      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="mb-5 flex items-center justify-between">
 
-        <div className="min-w-0 space-y-6">
+            <h2 className="text-xl font-bold">
+              Portfolio Breakdown
+            </h2>
 
-          <TradingChart />
+            <span className="text-xs text-slate-500">
+              Live values
+            </span>
 
-          <OrderHistory limit={5} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+            {/* BTC */}
+
+            <div className="rounded-lg bg-slate-950 p-4">
+
+              <p className="text-sm text-gray-400">
+                BTC
+              </p>
+
+              <p className="mt-1 text-lg font-bold">
+                {btc.toFixed(6)} BTC
+              </p>
+
+              <p className="mt-1 text-sm text-[#D4AF37]">
+                ${formatMoney(btcValue)}
+              </p>
+
+              <p className="mt-2 text-xs text-gray-500">
+                Price: ${formatMoney(btcPrice)}
+              </p>
+
+            </div>
+
+            {/* ETH */}
+
+            <div className="rounded-lg bg-slate-950 p-4">
+
+              <p className="text-sm text-gray-400">
+                ETH
+              </p>
+
+              <p className="mt-1 text-lg font-bold">
+                {eth.toFixed(6)} ETH
+              </p>
+
+              <p className="mt-1 text-sm text-[#D4AF37]">
+                ${formatMoney(ethValue)}
+              </p>
+
+              <p className="mt-2 text-xs text-gray-500">
+                Price: ${formatMoney(ethPrice)}
+              </p>
+
+            </div>
+
+            {/* BNB */}
+
+            <div className="rounded-lg bg-slate-950 p-4">
+
+              <p className="text-sm text-gray-400">
+                BNB
+              </p>
+
+              <p className="mt-1 text-lg font-bold">
+                {bnb.toFixed(6)} BNB
+              </p>
+
+              <p className="mt-1 text-sm text-[#D4AF37]">
+                ${formatMoney(bnbValue)}
+              </p>
+
+              <p className="mt-2 text-xs text-gray-500">
+                Price: ${formatMoney(bnbPrice)}
+              </p>
+
+            </div>
+
+            {/* SOL */}
+
+            <div className="rounded-lg bg-slate-950 p-4">
+
+              <p className="text-sm text-gray-400">
+                SOL
+              </p>
+
+              <p className="mt-1 text-lg font-bold">
+                {sol.toFixed(6)} SOL
+              </p>
+
+              <p className="mt-1 text-sm text-[#D4AF37]">
+                ${formatMoney(solValue)}
+              </p>
+
+              <p className="mt-2 text-xs text-gray-500">
+                Price: ${formatMoney(solPrice)}
+              </p>
+
+            </div>
+
+          </div>
+
         </div>
 
-        <aside className="grid content-start gap-6 sm:grid-cols-2 xl:grid-cols-1">
+        {/* ================================= */}
+        {/* TRADING AREA */}
+        {/* ================================= */}
 
-          <MarketWatch />
+        <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
 
-          <TradePanel />
+          {/* LEFT */}
 
-        </aside>
+          <div className="min-w-0 space-y-6">
+
+            <TradingChart />
+
+            <OrderHistory limit={5} />
+
+            <TransactionHistory />
+
+          </div>
+
+          {/* RIGHT */}
+
+          <aside className="grid content-start gap-6 sm:grid-cols-2 xl:grid-cols-1">
+
+            <MarketWatch />
+
+            <TradePanel />
+
+          </aside>
+
+        </div>
 
       </div>
 
@@ -434,3 +492,4 @@ function Dashboard() {
 }
 
 export default Dashboard;
+
