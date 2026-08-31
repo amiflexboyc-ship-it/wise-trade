@@ -1,8 +1,13 @@
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTrading } from "../context/TradingContext";
 import { getMarketPrices } from "../Services/MarketApi";
 
 function Market() {
+  const navigate = useNavigate();
+  const { setSelectedSymbol } = useTrading();
+
   const [markets, setMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -61,7 +66,9 @@ function Market() {
   const formatPrice = (price) => {
     const value = Number(price || 0);
 
-    if (value === 0) return "$0.00";
+    if (value === 0) {
+      return "$0.00";
+    }
 
     return `$${value.toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -97,6 +104,15 @@ function Market() {
   ];
 
   // ==========================================
+  // OPEN TRADE
+  // ==========================================
+
+  const handleTrade = (symbol) => {
+    setSelectedSymbol(symbol);
+    navigate("/trade");
+  };
+
+  // ==========================================
   // LOADING
   // ==========================================
 
@@ -126,16 +142,23 @@ function Market() {
     );
   }
 
+  // ==========================================
+  // PAGE
+  // ==========================================
+
   return (
     <div className="min-h-screen bg-slate-950 p-6 text-white">
 
       <div className="mx-auto max-w-7xl">
 
+        {/* ================================== */}
         {/* HEADER */}
+        {/* ================================== */}
 
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 
           <div>
+
             <p className="text-sm uppercase tracking-widest text-[#D4AF37]">
               Live Market
             </p>
@@ -147,6 +170,7 @@ function Market() {
             <p className="mt-2 text-gray-400">
               Live cryptocurrency prices
             </p>
+
           </div>
 
           <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -159,7 +183,9 @@ function Market() {
 
         </div>
 
+        {/* ================================== */}
         {/* ERROR */}
+        {/* ================================== */}
 
         {error && (
           <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-400">
@@ -167,7 +193,9 @@ function Market() {
           </div>
         )}
 
+        {/* ================================== */}
         {/* MARKET CARDS */}
+        {/* ================================== */}
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -182,7 +210,21 @@ function Market() {
             return (
               <div
                 key={coin.symbol}
-                className="rounded-xl border border-slate-800 bg-slate-900 p-5 transition hover:border-[#D4AF37]/50 hover:bg-slate-800"
+                onClick={() =>
+                  handleTrade(coin.symbol)
+                }
+                className="
+                  cursor-pointer
+                  rounded-xl
+                  border
+                  border-slate-800
+                  bg-slate-900
+                  p-5
+                  transition
+                  hover:border-[#D4AF37]/50
+                  hover:bg-slate-800
+                  hover:shadow-lg
+                "
               >
 
                 {/* TOP */}
@@ -190,6 +232,7 @@ function Market() {
                 <div className="flex items-center justify-between">
 
                   <div>
+
                     <h2 className="font-bold">
                       {coin.pair}
                     </h2>
@@ -197,6 +240,7 @@ function Market() {
                     <p className="mt-1 text-sm text-gray-500">
                       {coin.name}
                     </p>
+
                   </div>
 
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-950 text-sm font-bold text-[#D4AF37]">
@@ -225,13 +269,38 @@ function Market() {
 
                 </div>
 
+                {/* TRADE BUTTON */}
+
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleTrade(coin.symbol);
+                  }}
+                  className="
+                    mt-5
+                    w-full
+                    rounded-lg
+                    bg-[#D4AF37]
+                    py-2.5
+                    font-bold
+                    text-black
+                    transition
+                    hover:bg-[#f0c94d]
+                  "
+                >
+                  Trade {coin.symbol.slice(0, 3)}
+                </button>
+
               </div>
             );
           })}
 
         </div>
 
+        {/* ================================== */}
         {/* INFO */}
+        {/* ================================== */}
 
         <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900 p-5">
 
@@ -240,8 +309,13 @@ function Market() {
           </h2>
 
           <p className="mt-2 text-sm text-gray-500">
-            Prices are retrieved from the live market API and
-            automatically refreshed every 5 seconds.
+            Prices are retrieved from the live market API
+            and automatically refreshed every 5 seconds.
+          </p>
+
+          <p className="mt-3 text-sm text-gray-500">
+            Click any market or Trade button to open the
+            trading panel for that cryptocurrency.
           </p>
 
         </div>
