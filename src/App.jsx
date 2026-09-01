@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
+import Support from "./pages/Support";
 import Orders from "./pages/Orders";
 import Dashboard from "./pages/Dashboard";
 import Sidebar from "./components/Sidebar";
@@ -150,6 +151,20 @@ function App() {
 
                 <main className="min-w-0 flex-1">
                   <Profile />
+                </main>
+              </div>
+            }
+          />
+
+
+          <Route
+            path="/support"
+            element={
+              <div className="flex min-h-screen bg-slate-950 text-white">
+                <Sidebar />
+
+                <main className="min-w-0 flex-1">
+                  <Support />
                 </main>
               </div>
             }

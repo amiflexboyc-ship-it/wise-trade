@@ -1,3 +1,4 @@
+
 import {
   Home,
   ChartCandlestick,
@@ -5,6 +6,7 @@ import {
   Settings,
   LogOut,
   ClipboardList,
+  Headphones,
 } from "lucide-react";
 
 import { signOut } from "firebase/auth";
@@ -59,6 +61,11 @@ function Sidebar() {
       name: "Settings",
       path: "/profile",
       icon: Settings,
+    },
+    {
+      name: "Help & Support",
+      path: "/support",
+      icon: Headphones,
     },
   ];
 
@@ -179,3 +186,4 @@ function Sidebar() {
 }
 
 export default Sidebar;
+
