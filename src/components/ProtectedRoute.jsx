@@ -6,9 +6,10 @@ function ProtectedRoute() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <p className="text-gray-400">
-          Loading...
+      <div className="min-h-screen bg-[#07090e] text-white flex flex-col items-center justify-center gap-3">
+        <div className="h-10 w-10 border-3 border-[#F0B90B] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-semibold text-slate-400 tracking-wider uppercase">
+          Verifying WiseTrade Session...
         </p>
       </div>
     );

@@ -1,147 +1,102 @@
-
 import { useTrading } from "../context/TradingContext";
+import { ArrowDownLeft, ArrowUpRight, CheckCircle2 } from "lucide-react";
 
 function TransactionHistory({ limit }) {
-    const { transactions } = useTrading();
+  const { transactions = [] } = useTrading();
 
-    const displayedTransactions = limit
-        ? transactions.slice(0, limit)
-        : transactions;
+  const displayedTransactions = limit ? transactions.slice(0, limit) : transactions;
 
-    return (
-        <div className="mt-6 w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-4 sm:p-6">
+  const formatDate = (date) => {
+    if (!date) return "—";
+    try {
+      const parsedDate =
+        typeof date?.toDate === "function" ? date.toDate() : new Date(date);
+      if (isNaN(parsedDate.getTime())) return "—";
+      return parsedDate.toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "—";
+    }
+  };
 
-            {/* HEADER */}
-
-            <div className="mb-5 flex flex-col gap-2 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h2 className="text-xl font-bold text-white">
-                        {limit
-                            ? "Recent Transactions"
-                            : "Transaction History"}
-                    </h2>
-
-                    <p className="mt-1 text-sm text-gray-500">
-                        Deposits and withdrawals
-                    </p>
-                </div>
-
-                <span className="text-sm text-gray-400">
-                    {transactions.length} transactions
-                </span>
-            </div>
-
-            {/* NO TRANSACTIONS */}
-
-            {transactions.length === 0 ? (
-                <div className="py-10 text-center">
-                    <p className="text-gray-400">
-                        No transactions yet.
-                    </p>
-
-                    <p className="mt-2 text-sm text-gray-500">
-                        Your deposits and withdrawals will appear here.
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-3">
-
-                    {displayedTransactions.map(
-                        (transaction) => {
-
-                            const isDeposit =
-                                transaction.type === "DEPOSIT";
-
-                            return (
-                                <div
-                                    key={transaction.id}
-                                    className="flex flex-col gap-4 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:flex-row sm:items-center sm:justify-between"
-                                >
-
-                                    {/* TYPE */}
-
-                                    <div className="flex items-center gap-3">
-
-                                        <div
-                                            className={`flex h-10 w-10 items-center justify-center rounded-full ${isDeposit
-                                                    ? "bg-green-500/10"
-                                                    : "bg-red-500/10"
-                                                }`}
-                                        >
-                                            <span
-                                                className={`text-lg font-bold ${isDeposit
-                                                        ? "text-green-400"
-                                                        : "text-red-400"
-                                                    }`}
-                                            >
-                                                {isDeposit ? "+" : "−"}
-                                            </span>
-                                        </div>
-
-                                        <div>
-                                            <p
-                                                className={`font-bold ${isDeposit
-                                                        ? "text-green-400"
-                                                        : "text-red-400"
-                                                    }`}
-                                            >
-                                                {transaction.type}
-                                            </p>
-
-                                            <p className="text-sm text-gray-500">
-                                                USDT
-                                            </p>
-                                        </div>
-
-                                    </div>
-
-                                    {/* AMOUNT */}
-
-                                    <div className="sm:text-right">
-
-                                        <p className="text-lg font-bold text-white">
-                                            {isDeposit ? "+" : "-"}$
-                                            {Number(
-                                                transaction.amount || 0
-                                            ).toLocaleString(
-                                                undefined,
-                                                {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 2,
-                                                }
-                                            )}
-                                        </p>
-
-                                        <span className="mt-1 inline-block rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-400">
-                                            {transaction.status ||
-                                                "COMPLETED"}
-                                        </span>
-
-                                    </div>
-
-                                    {/* DATE */}
-
-                                    <div className="sm:text-right">
-                                        <p className="text-sm text-gray-400">
-                                            {transaction.createdAt
-                                                ? typeof transaction.createdAt.toDate === "function"
-                                                    ? transaction.createdAt.toDate().toLocaleString()
-                                                    : new Date(transaction.createdAt).toLocaleString()
-                                                : "Processing..."}
-                                        </p>
-                                    </div>
-
-                                </div>
-                            );
-                        }
-                    )}
-
-                </div>
-            )}
-
+  return (
+    <div className="w-full overflow-hidden rounded-2xl border border-slate-800/80 bg-[#0c101a] p-5 shadow-xl">
+      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+        <div>
+          <h3 className="font-bold text-base text-white">
+            {limit ? "Recent Transactions" : "Wallet Transaction Ledger"}
+          </h3>
+          <p className="text-xs text-slate-400">Deposits and withdrawals history</p>
         </div>
-    );
+        <span className="text-xs font-mono text-slate-400">
+          {transactions.length} records
+        </span>
+      </div>
+
+      {transactions.length === 0 ? (
+        <div className="py-8 text-center text-slate-500 text-xs">
+          No wallet deposits or withdrawals recorded yet.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {displayedTransactions.map((tx) => {
+            const isDeposit = tx.type === "DEPOSIT";
+
+            return (
+              <div
+                key={tx.id}
+                className="flex items-center justify-between p-3.5 rounded-xl bg-[#121724] border border-slate-800/70 hover:border-slate-700 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                      isDeposit
+                        ? "bg-[#0ecb81]/15 text-[#0ecb81]"
+                        : "bg-[#f6465d]/15 text-[#f6465d]"
+                    }`}
+                  >
+                    {isDeposit ? <ArrowDownLeft size={16} /> : <ArrowUpRight size={16} />}
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-white">
+                        {isDeposit ? "Deposit USDT" : "Withdraw USDT"}
+                      </span>
+                      <span className="rounded bg-slate-800 px-1.5 py-0.2 text-[10px] font-mono text-slate-400">
+                        {tx.network || "TRC20"}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-500 font-mono">
+                      {formatDate(tx.createdAt)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p
+                    className={`font-mono font-bold text-sm tabular-nums ${
+                      isDeposit ? "text-[#0ecb81]" : "text-[#f6465d]"
+                    }`}
+                  >
+                    {isDeposit ? "+" : "-"}${Number(tx.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <span className="text-[10px] text-[#0ecb81] font-semibold flex items-center justify-end gap-1">
+                    <CheckCircle2 size={11} />
+                    <span>Completed</span>
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default TransactionHistory;
-

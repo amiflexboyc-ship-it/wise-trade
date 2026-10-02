@@ -1,526 +1,388 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useTrading } from "../context/TradingContext";
 import { getMarketPrices } from "../Services/MarketApi";
+import { ArrowDownUp, CheckCircle, ShieldAlert, Zap } from "lucide-react";
 
 function TradePanel() {
   const {
     wallet,
     buyAsset,
     sellAsset,
-    loading,
     selectedSymbol,
     setSelectedSymbol,
+    notify,
   } = useTrading();
 
-  const [side, setSide] = useState("BUY");
+  const [orderType, setOrderType] = useState("MARKET"); // "MARKET" | "LIMIT"
+  const [side, setSide] = useState("BUY"); // "BUY" | "SELL"
   const [amount, setAmount] = useState("");
+  const [limitPrice, setLimitPrice] = useState("");
+  const [percent, setPercent] = useState(0);
   const [trading, setTrading] = useState(false);
+  const [enableTPSL, setEnableTPSL] = useState(false);
+  const [tpPrice, setTpPrice] = useState("");
+  const [slPrice, setSlPrice] = useState("");
 
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
+  const [markets, setMarkets] = useState([]);
+  const [currentPrice, setCurrentPrice] = useState(0);
 
-  const [price, setPrice] = useState(0);
-  const [priceLoading, setPriceLoading] = useState(true);
-
-  // SUPPORTED ASSETS
-
-  const assets = [
-    {
-      symbol: "BTCUSDT",
-      name: "Bitcoin",
-      short: "BTC",
-    },
-    {
-      symbol: "ETHUSDT",
-      name: "Ethereum",
-      short: "ETH",
-    },
-    {
-      symbol: "BNBUSDT",
-      name: "BNB",
-      short: "BNB",
-    },
-    {
-      symbol: "SOLUSDT",
-      name: "Solana",
-      short: "SOL",
-    },
+  const supportedAssets = [
+    { symbol: "BTCUSDT", short: "BTC", name: "Bitcoin" },
+    { symbol: "ETHUSDT", short: "ETH", name: "Ethereum" },
+    { symbol: "SOLUSDT", short: "SOL", name: "Solana" },
+    { symbol: "BNBUSDT", short: "BNB", name: "BNB" },
+    { symbol: "XRPUSDT", short: "XRP", name: "Ripple" },
+    { symbol: "ADAUSDT", short: "ADA", name: "Cardano" },
+    { symbol: "DOGEUSDT", short: "DOGE", name: "Dogecoin" },
+    { symbol: "AVAXUSDT", short: "AVAX", name: "Avalanche" },
   ];
 
-  // SELECTED ASSET
+  const currentCoin =
+    supportedAssets.find((a) => a.symbol === selectedSymbol) || supportedAssets[0];
+  const asset = currentCoin.short;
 
-  const selectedAsset =
-    assets.find(
-      (item) =>
-        item.symbol === selectedSymbol
-    ) || assets[0];
-
-  const asset = selectedAsset.short;
-
-  // GET LIVE PRICE
-
+  // Poll prices
   useEffect(() => {
     let mounted = true;
-
-    const loadPrice = async () => {
+    const fetchPrices = async () => {
       try {
-        setPriceLoading(true);
-
-        const markets =
-          await getMarketPrices();
-
-        const selectedCoin =
-          markets.find(
-            (coin) =>
-              coin.symbol === selectedSymbol
-          );
-
-        if (
-          selectedCoin &&
-          mounted
-        ) {
-          setPrice(
-            Number(selectedCoin.price)
-          );
+        const data = await getMarketPrices();
+        if (mounted && Array.isArray(data)) {
+          setMarkets(data);
+          const found = data.find((c) => c.symbol === selectedSymbol);
+          if (found) {
+            setCurrentPrice(found.price);
+            if (!limitPrice) {
+              setLimitPrice(found.price.toString());
+            }
+          }
         }
-      } catch (error) {
-        console.error(
-          "Market price error:",
-          error
-        );
-
-        if (mounted) {
-          setPrice(0);
-        }
-      } finally {
-        if (mounted) {
-          setPriceLoading(false);
-        }
+      } catch (err) {
+        console.warn("TradePanel market fetch error:", err);
       }
     };
 
-    loadPrice();
-
-    const interval = setInterval(
-      loadPrice,
-      5000
-    );
-
+    fetchPrices();
+    const timer = setInterval(fetchPrices, 3000);
     return () => {
       mounted = false;
-      clearInterval(interval);
+      clearInterval(timer);
     };
   }, [selectedSymbol]);
 
-  // CHANGE ASSET
+  const usdtBalance = Number(wallet?.USDT || 0);
+  const assetBalance = Number(wallet?.[asset] || 0);
 
-  const handleAssetChange = (symbol) => {
-    if (trading) return;
+  const executionPrice =
+    orderType === "LIMIT" ? Number(limitPrice) || currentPrice : currentPrice;
 
-    setSelectedSymbol(symbol);
-    setAmount("");
-    setMessage("");
-    setMessageType("");
-    setPrice(0);
+  const numAmount = Number(amount) || 0;
+  const subtotal = numAmount * executionPrice;
+  const estimatedFee = +(subtotal * 0.001).toFixed(2);
+  const total = side === "BUY" ? subtotal + estimatedFee : subtotal - estimatedFee;
+
+  // Handle quick percentage selection
+  const handlePercentSelect = (pct) => {
+    setPercent(pct);
+    if (side === "BUY") {
+      if (executionPrice <= 0) return;
+      const budget = (usdtBalance * pct) / 100;
+      // account for 0.1% fee
+      const qty = (budget / (executionPrice * 1.001)).toFixed(asset === "BTC" || asset === "ETH" ? 6 : 4);
+      setAmount(qty > 0 ? qty : "");
+    } else {
+      const qty = ((assetBalance * pct) / 100).toFixed(asset === "BTC" || asset === "ETH" ? 6 : 4);
+      setAmount(qty > 0 ? qty : "");
+    }
   };
 
-  // CALCULATIONS
-
-  const amountNumber =
-    Number(amount) || 0;
-
-  const total =
-    amountNumber * price;
-
-  const assetBalance =
-    Number(wallet?.[asset] || 0);
-
-  const usdtBalance =
-    Number(wallet?.USDT || 0);
-
-  // TRADE
-
   const handleTrade = async () => {
-    if (trading) return;
+    if (trading || numAmount <= 0 || executionPrice <= 0) return;
 
-    setMessage("");
-    setMessageType("");
-
-    if (!price || price <= 0) {
-      setMessage(
-        "Market price is not available yet."
-      );
-      setMessageType("error");
+    if (side === "BUY" && total > usdtBalance) {
+      notify("Insufficient available USDT balance.", "error", "Trade Error");
       return;
     }
 
-    if (amountNumber <= 0) {
-      setMessage(
-        `Enter a valid ${asset} amount.`
-      );
-      setMessageType("error");
-      return;
-    }
-
-    if (
-      side === "BUY" &&
-      total > usdtBalance
-    ) {
-      setMessage(
-        "Insufficient USDT balance."
-      );
-      setMessageType("error");
-      return;
-    }
-
-    if (
-      side === "SELL" &&
-      amountNumber > assetBalance
-    ) {
-      setMessage(
-        `Insufficient ${asset} balance.`
-      );
-      setMessageType("error");
+    if (side === "SELL" && numAmount > assetBalance) {
+      notify(`Insufficient ${asset} balance.`, "error", "Trade Error");
       return;
     }
 
     try {
       setTrading(true);
-
-      let result;
-
+      let res;
       if (side === "BUY") {
-        result = await buyAsset(
-          selectedSymbol,
-          amountNumber,
-          price
-        );
+        res = await buyAsset(selectedSymbol, numAmount, executionPrice);
       } else {
-        result = await sellAsset(
-          selectedSymbol,
-          amountNumber,
-          price
-        );
+        res = await sellAsset(selectedSymbol, numAmount, executionPrice);
       }
 
-      if (result?.success) {
-        setMessage(
-          result.message
-        );
-        setMessageType("success");
+      if (res?.success) {
         setAmount("");
-      } else {
-        setMessage(
-          result?.message ||
-            "Trade failed."
-        );
-        setMessageType("error");
+        setPercent(0);
       }
-    } catch (error) {
-      console.error(
-        "TRADE ERROR:",
-        error
-      );
-
-      setMessage(
-        error?.message ||
-          "Something went wrong."
-      );
-      setMessageType("error");
     } finally {
       setTrading(false);
     }
   };
 
-  // LOADING
-
-  if (loading) {
-    return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-white">
-        Loading trading account...
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-4 text-white sm:p-5">
-
+    <div className="w-full rounded-2xl border border-slate-800/80 bg-[#0c101a] p-4 sm:p-5 shadow-xl">
       {/* HEADER */}
-
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <p className="text-xs uppercase tracking-wider text-gray-500">
-            Trade
-          </p>
-
-          <h2 className="text-2xl font-bold">
-            {asset}/USDT
-          </h2>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-[#0ecb81] animate-pulse" />
+          <h3 className="font-bold text-white tracking-wide">Spot Order</h3>
         </div>
-
-        <span className="rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-400">
-          PAPER TRADING
+        <span className="rounded-full bg-[#F0B90B]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#F0B90B] border border-[#F0B90B]/25">
+          0.1% Fee • VIP 1
         </span>
       </div>
 
-      {/* ASSET SELECTOR */}
-
-      <div className="mb-5">
-
-        <p className="mb-2 text-sm text-gray-400">
-          Select Asset
-        </p>
-
-        <div className="grid grid-cols-2 gap-2">
-
-          {assets.map((item) => (
-            <button
-              key={item.symbol}
-              type="button"
-              disabled={trading}
-              onClick={() =>
-                handleAssetChange(
-                  item.symbol
-                )
-              }
-              className={`rounded-lg border p-3 text-left transition ${
-                selectedSymbol ===
-                item.symbol
-                  ? "border-[#D4AF37] bg-[#D4AF37]/10"
-                  : "border-slate-800 bg-slate-950 hover:border-slate-700"
-              }`}
-            >
-              <p
-                className={`font-bold ${
-                  selectedSymbol ===
-                  item.symbol
-                    ? "text-[#D4AF37]"
-                    : "text-white"
-                }`}
-              >
-                {item.short}
-              </p>
-
-              <p className="text-xs text-gray-500">
-                {item.name}
-              </p>
-            </button>
-          ))}
-
+      {/* PAIR SELECTOR DROPDOWN */}
+      <div className="mb-4">
+        <label className="text-xs font-semibold text-slate-400 mb-1.5 block">
+          Trading Pair
+        </label>
+        <div className="relative">
+          <select
+            value={selectedSymbol}
+            onChange={(e) => {
+              setSelectedSymbol(e.target.value);
+              setAmount("");
+              setPercent(0);
+            }}
+            className="w-full appearance-none rounded-xl border border-slate-800 bg-[#121724] px-3.5 py-2.5 text-sm font-bold text-white outline-none focus:border-[#F0B90B] transition cursor-pointer"
+          >
+            {supportedAssets.map((item) => (
+              <option key={item.symbol} value={item.symbol} className="bg-slate-900 text-white">
+                {item.short}/USDT — {item.name}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+            <ArrowDownUp size={14} />
+          </div>
         </div>
       </div>
 
-      {/* BALANCES */}
-
-      <div className="mb-5 w-full rounded-lg bg-slate-950 p-4">
-
-        <div className="flex justify-between gap-3">
-          <p className="text-sm text-gray-400">
-            Available USDT
-          </p>
-
-          <p className="font-bold text-[#D4AF37]">
-            ${usdtBalance.toFixed(2)}
-          </p>
-        </div>
-
-        <div className="mt-3 flex justify-between gap-3">
-          <p className="text-sm text-gray-400">
-            {asset} Balance
-          </p>
-
-          <p className="font-bold text-white">
-            {assetBalance.toFixed(6)} {asset}
-          </p>
-        </div>
-
-      </div>
-
-      {/* MESSAGE */}
-
-      {message && (
-        <div
-          className={`mb-5 rounded-lg border p-4 ${
-            messageType === "success"
-              ? "border-green-500/30 bg-green-500/10 text-green-400"
-              : "border-red-500/30 bg-red-500/10 text-red-400"
-          }`}
-        >
-          <p className="font-semibold">
-            {messageType === "success"
-              ? "Trade Successful"
-              : "Trade Failed"}
-          </p>
-
-          <p className="mt-1 text-sm">
-            {message}
-          </p>
-        </div>
-      )}
-
-      {/* BUY / SELL */}
-
-      <div className="mb-5 grid grid-cols-2 gap-2">
-
+      {/* BUY / SELL TOGGLE */}
+      <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-[#080b12] p-1 mb-4">
         <button
           type="button"
-          disabled={trading}
           onClick={() => {
             setSide("BUY");
-            setMessage("");
+            setPercent(0);
           }}
-          className={`rounded-lg py-3 font-bold transition ${
+          className={`rounded-lg py-2.5 text-xs font-black transition tracking-wider ${
             side === "BUY"
-              ? "bg-[#D4AF37] text-black"
-              : "bg-slate-800 text-gray-400 hover:bg-slate-700"
+              ? "bg-[#0ecb81] text-black shadow-lg shadow-[#0ecb81]/20"
+              : "text-slate-400 hover:text-white"
           }`}
         >
-          BUY
+          BUY {asset}
         </button>
 
         <button
           type="button"
-          disabled={trading}
           onClick={() => {
             setSide("SELL");
-            setMessage("");
+            setPercent(0);
           }}
-          className={`rounded-lg py-3 font-bold transition ${
+          className={`rounded-lg py-2.5 text-xs font-black transition tracking-wider ${
             side === "SELL"
-              ? "bg-red-600 text-white"
-              : "bg-slate-800 text-gray-400 hover:bg-slate-700"
+              ? "bg-[#f6465d] text-white shadow-lg shadow-[#f6465d]/20"
+              : "text-slate-400 hover:text-white"
           }`}
         >
-          SELL
+          SELL {asset}
+        </button>
+      </div>
+
+      {/* ORDER TYPE TABS (MARKET / LIMIT) */}
+      <div className="flex gap-2 mb-4 border-b border-slate-800/80 pb-3">
+        <button
+          type="button"
+          onClick={() => setOrderType("MARKET")}
+          className={`text-xs font-bold transition pb-1 border-b-2 ${
+            orderType === "MARKET"
+              ? "border-[#F0B90B] text-[#F0B90B]"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          Market Order
         </button>
 
+        <button
+          type="button"
+          onClick={() => setOrderType("LIMIT")}
+          className={`text-xs font-bold transition pb-1 border-b-2 ${
+            orderType === "LIMIT"
+              ? "border-[#F0B90B] text-[#F0B90B]"
+              : "border-transparent text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          Limit Order
+        </button>
       </div>
 
-      {/* LIVE PRICE */}
+      {/* PRICE INPUT (Editable if LIMIT, fixed if MARKET) */}
+      <div className="mb-3">
+        <div className="flex justify-between text-xs text-slate-400 mb-1">
+          <span>Order Price</span>
+          <span className="font-mono text-slate-300">
+            Live: ${currentPrice ? currentPrice.toLocaleString() : "--"}
+          </span>
+        </div>
 
-      <div className="mb-5">
+        <div className="relative">
+          <input
+            type="number"
+            step="any"
+            disabled={orderType === "MARKET"}
+            value={orderType === "MARKET" ? currentPrice || "" : limitPrice}
+            onChange={(e) => setLimitPrice(e.target.value)}
+            className="w-full rounded-xl border border-slate-800 bg-[#121724] px-3.5 py-2.5 text-sm font-mono text-white outline-none focus:border-[#F0B90B] disabled:opacity-75 disabled:cursor-not-allowed transition"
+            placeholder={orderType === "MARKET" ? "Best Market Price" : "Enter Limit Price"}
+          />
+          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+            USDT
+          </span>
+        </div>
+      </div>
 
-        <label className="mb-2 block text-sm text-gray-400">
-          {asset} Live Price
-        </label>
-
-        {priceLoading ? (
-          <div className="flex items-center gap-2 text-gray-400">
-
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-[#D4AF37]" />
-
-            <span>
-              Loading market price...
+      {/* AMOUNT INPUT */}
+      <div className="mb-3">
+        <div className="flex justify-between text-xs text-slate-400 mb-1">
+          <span>Amount</span>
+          <span className="text-slate-400">
+            Available:{" "}
+            <span className="font-semibold text-white font-mono">
+              {side === "BUY"
+                ? `$${usdtBalance.toFixed(2)}`
+                : `${assetBalance.toFixed(6)} ${asset}`}
             </span>
+          </span>
+        </div>
 
+        <div className="relative">
+          <input
+            type="number"
+            step="any"
+            min="0"
+            value={amount}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              setPercent(0);
+            }}
+            placeholder={`0.00`}
+            className="w-full rounded-xl border border-slate-800 bg-[#121724] px-3.5 py-2.5 text-sm font-mono text-white outline-none focus:border-[#F0B90B] transition"
+          />
+          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#F0B90B]">
+            {asset}
+          </span>
+        </div>
+      </div>
+
+      {/* QUICK PERCENTAGE BUTTONS */}
+      <div className="grid grid-cols-4 gap-1.5 mb-4">
+        {[25, 50, 75, 100].map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => handlePercentSelect(p)}
+            className={`rounded-lg py-1.5 text-xs font-bold font-mono transition ${
+              percent === p
+                ? "bg-[#F0B90B] text-black"
+                : "bg-[#121724] text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800/80"
+            }`}
+          >
+            {p}%
+          </button>
+        ))}
+      </div>
+
+      {/* TP / SL TOGGLE */}
+      <div className="mb-4 border-t border-slate-800/60 pt-3">
+        <div className="flex items-center justify-between mb-2">
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-400">
+            <input
+              type="checkbox"
+              checked={enableTPSL}
+              onChange={(e) => setEnableTPSL(e.target.checked)}
+              className="rounded border-slate-700 bg-slate-900 text-[#F0B90B] focus:ring-0 cursor-pointer"
+            />
+            <span>Take Profit / Stop Loss (TP/SL)</span>
+          </label>
+        </div>
+
+        {enableTPSL && (
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <input
+              type="number"
+              placeholder="TP Price"
+              value={tpPrice}
+              onChange={(e) => setTpPrice(e.target.value)}
+              className="rounded-lg border border-slate-800 bg-[#121724] px-3 py-1.5 text-xs font-mono text-white outline-none focus:border-[#0ecb81]"
+            />
+            <input
+              type="number"
+              placeholder="SL Price"
+              value={slPrice}
+              onChange={(e) => setSlPrice(e.target.value)}
+              className="rounded-lg border border-slate-800 bg-[#121724] px-3 py-1.5 text-xs font-mono text-white outline-none focus:border-[#f6465d]"
+            />
           </div>
-        ) : price > 0 ? (
-          <p className="text-xl font-bold text-[#D4AF37]">
-            $
-            {price.toLocaleString(
-              undefined,
-              {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }
-            )}
-          </p>
-        ) : (
-          <p className="text-red-400">
-            Market price unavailable
-          </p>
         )}
-
       </div>
 
-      {/* AMOUNT */}
-
-      <div className="mb-5">
-
-        <label className="mb-2 block text-sm text-gray-400">
-          Amount ({asset})
-        </label>
-
-        <input
-          type="number"
-          min="0"
-          step="0.000001"
-          value={amount}
-          disabled={trading}
-          onChange={(e) =>
-            setAmount(e.target.value)
-          }
-          onKeyDown={(e) => {
-            if (
-              e.key === "Enter"
-            ) {
-              handleTrade();
-            }
-          }}
-          placeholder="0.01"
-          className="w-full rounded-lg border border-slate-800 bg-slate-950 p-3 text-white outline-none focus:border-[#D4AF37] disabled:opacity-50"
-        />
-
+      {/* SUMMARY BREAKDOWN */}
+      <div className="rounded-xl bg-[#080b12] p-3 space-y-1.5 text-xs mb-4 border border-slate-800/50">
+        <div className="flex justify-between text-slate-400">
+          <span>Subtotal</span>
+          <span className="font-mono text-white">${subtotal.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between text-slate-400">
+          <span>Est. Fee (0.1%)</span>
+          <span className="font-mono text-slate-300">${estimatedFee.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between border-t border-slate-800/70 pt-1.5 font-bold">
+          <span className="text-white">Order Total</span>
+          <span className="font-mono text-[#F0B90B] text-sm">${total.toFixed(2)}</span>
+        </div>
       </div>
 
-      {/* TOTAL */}
-
-      <div className="mb-5 flex justify-between rounded-lg bg-slate-950 p-4">
-
-        <span className="text-gray-400">
-          Total
-        </span>
-
-        <span className="font-bold text-white">
-          $
-          {total.toLocaleString(
-            undefined,
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          )}
-        </span>
-
-      </div>
-
-      {/* TRADE BUTTON */}
-
+      {/* SUBMIT BUTTON */}
       <button
         type="button"
+        disabled={trading || numAmount <= 0 || executionPrice <= 0}
         onClick={handleTrade}
-        disabled={
-          trading ||
-          amountNumber <= 0 ||
-          price <= 0
-        }
-        className={`w-full rounded-lg py-3 font-bold transition ${
-          trading ||
-          amountNumber <= 0 ||
-          price <= 0
-            ? "cursor-not-allowed bg-slate-700 text-gray-500"
-            : side === "BUY"
-            ? "bg-[#D4AF37] text-black hover:bg-[#f0c94d]"
-            : "bg-red-600 text-white hover:bg-red-700"
+        className={`w-full rounded-xl py-3.5 text-sm font-black transition tracking-wider disabled:opacity-40 disabled:cursor-not-allowed shadow-xl ${
+          side === "BUY"
+            ? "bg-[#0ecb81] text-black hover:bg-[#0bb371] shadow-[#0ecb81]/25"
+            : "bg-[#f6465d] text-white hover:bg-[#e0374e] shadow-[#f6465d]/25"
         }`}
       >
-        {trading
-          ? "Processing..."
-          : side === "BUY"
-          ? `BUY ${asset}`
-          : `SELL ${asset}`}
+        {trading ? (
+          "Executing Order..."
+        ) : (
+          <div className="flex items-center justify-center gap-1.5">
+            <Zap size={16} />
+            <span>
+              {side === "BUY" ? `BUY ${asset}` : `SELL ${asset}`}
+            </span>
+          </div>
+        )}
       </button>
 
-      {/* NOTICE */}
-
-      <p className="mt-4 text-center text-xs text-gray-500">
-        Paper trading only. No real funds are used.
+      {/* SAFE DISCLOSURE */}
+      <p className="mt-3 text-center text-[10px] text-slate-500 flex items-center justify-center gap-1">
+        <ShieldAlert size={12} />
+        <span>WiseTrade High-Frequency Simulated Matching Engine</span>
       </p>
-
     </div>
   );
 }
 
 export default TradePanel;
-

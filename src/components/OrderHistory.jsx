@@ -1,228 +1,111 @@
-
 import { useTrading } from "../context/TradingContext";
+import { ArrowUpRight, ArrowDownRight, CheckCircle2 } from "lucide-react";
 
 function OrderHistory({ limit }) {
   const { orders = [] } = useTrading();
 
-  const displayedOrders = limit
-    ? orders.slice(0, limit)
-    : orders;
-
-  // ==========================================
-  // FORMAT DATE
-  // ==========================================
+  const displayedOrders = limit ? orders.slice(0, limit) : orders;
 
   const formatDate = (date) => {
     if (!date) return "—";
-
     try {
-      // Firestore Timestamp
-      if (typeof date.toDate === "function") {
-        return date.toDate().toLocaleString();
-      }
-
-      const parsedDate = new Date(date);
-
-      if (isNaN(parsedDate.getTime())) {
-        return "—";
-      }
-
-      return parsedDate.toLocaleString();
+      const parsedDate =
+        typeof date?.toDate === "function" ? date.toDate() : new Date(date);
+      if (isNaN(parsedDate.getTime())) return "—";
+      return parsedDate.toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     } catch {
       return "—";
     }
   };
 
-  // ==========================================
-  // FORMAT MONEY
-  // ==========================================
-
-  const formatMoney = (value) => {
-    return Number(value || 0).toLocaleString(
-      undefined,
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }
-    );
-  };
-
   return (
-    <div className="mt-6 w-full min-w-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-4 sm:p-6">
-
-      {/* ================================= */}
-      {/* HEADER */}
-      {/* ================================= */}
-
-      <div className="flex min-w-0 flex-col justify-between gap-4 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:flex-row sm:items-center">
-
+    <div className="w-full overflow-hidden rounded-2xl border border-slate-800/80 bg-[#0c101a] p-5 shadow-xl">
+      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
         <div>
-          <h2 className="text-xl font-bold">
-            {limit
-              ? "Recent Orders"
-              : "Order History"}
-          </h2>
-
-          <p className="mt-1 text-sm text-gray-500">
-            Your completed trading activity
-          </p>
+          <h3 className="font-bold text-base text-white">
+            {limit ? "Recent Orders" : "Complete Order History"}
+          </h3>
+          <p className="text-xs text-slate-400">Filled spot trades log</p>
         </div>
-
-        <span className="rounded-full bg-slate-800 px-3 py-1 text-sm text-gray-400">
-          {orders.length}{" "}
-          {orders.length === 1
-            ? "order"
-            : "orders"}
+        <span className="text-xs font-mono text-slate-400">
+          {orders.length} orders
         </span>
-
       </div>
 
-      {/* ================================= */}
-      {/* NO ORDERS */}
-      {/* ================================= */}
-
       {orders.length === 0 ? (
-
-        <div className="py-12 text-center">
-
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-800 text-2xl">
-            📊
-          </div>
-
-          <p className="mt-4 font-medium text-gray-300">
-            No trades yet
-          </p>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Your completed trades will appear here.
-          </p>
-
+        <div className="py-8 text-center text-slate-500 text-xs">
+          No executed trades yet. Open a trade on the terminal to start.
         </div>
-
       ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs min-w-[600px]">
+            <thead className="text-slate-500 font-semibold border-b border-slate-800/80 text-[11px] uppercase">
+              <tr>
+                <th className="pb-2.5">Pair</th>
+                <th className="pb-2.5">Side</th>
+                <th className="pb-2.5">Amount</th>
+                <th className="pb-2.5">Price</th>
+                <th className="pb-2.5">Total (USDT)</th>
+                <th className="pb-2.5">Status</th>
+                <th className="pb-2.5 text-right">Time</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/40 font-mono">
+              {displayedOrders.map((order, idx) => {
+                const side = String(order.side || "").toUpperCase();
 
-        /* ================================= */
-        /* ORDERS */
-        /* ================================= */
+                return (
+                  <tr key={order.id || idx} className="hover:bg-slate-800/30 transition">
+                    <td className="py-3 font-sans font-bold text-white text-xs">
+                      {order.symbol || "BTC/USDT"}
+                    </td>
 
-        <div className="mt-4 space-y-3">
-
-          {displayedOrders.map(
-            (order, index) => {
-
-              const side =
-                String(
-                  order.side || ""
-                ).toUpperCase();
-
-              return (
-                <div
-                  key={
-                    order.id ||
-                    `${order.symbol}-${index}`
-                  }
-                  className="flex flex-col justify-between gap-4 rounded-lg border border-slate-800 bg-slate-950 p-4 transition hover:border-slate-700 sm:flex-row sm:items-center"
-                >
-
-                  {/* ===================== */}
-                  {/* TRADE INFORMATION */}
-                  {/* ===================== */}
-
-                  <div className="min-w-0">
-
-                    <div className="flex flex-wrap items-center gap-3">
-
+                    <td className="py-3">
                       <span
-                        className={`font-bold ${
-                          side === "BUY"
-                            ? "text-green-400"
-                            : "text-red-400"
+                        className={`inline-flex items-center gap-1 font-bold ${
+                          side === "BUY" ? "text-[#0ecb81]" : "text-[#f6465d]"
                         }`}
                       >
-                        {side || "TRADE"}
+                        {side === "BUY" ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+                        {side}
                       </span>
+                    </td>
 
-                      <span className="font-semibold text-white">
-                        {order.symbol ||
-                          "BTC/USDT"}
+                    <td className="py-3 text-white font-bold tabular-nums">
+                      {Number(order.amount || 0).toFixed(4)}
+                    </td>
+
+                    <td className="py-3 text-slate-300 tabular-nums">
+                      ${Number(order.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+
+                    <td className="py-3 text-[#F0B90B] font-bold tabular-nums">
+                      ${Number(order.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+
+                    <td className="py-3 font-sans">
+                      <span className="rounded-full bg-[#0ecb81]/15 px-2 py-0.5 text-[10px] font-bold text-[#0ecb81]">
+                        {order.status || "COMPLETED"}
                       </span>
+                    </td>
 
-                    </div>
-
-                    <p className="mt-1 text-sm text-gray-400">
-                      {Number(
-                        order.amount || 0
-                      ).toFixed(6)}{" "}
-                      {order.asset ||
-                        ""}
-                    </p>
-
-                  </div>
-
-                  {/* ===================== */}
-                  {/* TOTAL */}
-                  {/* ===================== */}
-
-                  <div className="sm:text-right">
-
-                    <p className="font-semibold text-white">
-                      $
-                      {formatMoney(
-                        order.total
-                      )}
-                    </p>
-
-                    <p className="text-sm text-gray-400">
-                      Price: $
-                      {formatMoney(
-                        order.price
-                      )}
-                    </p>
-
-                  </div>
-
-                  {/* ===================== */}
-                  {/* STATUS + DATE */}
-                  {/* ===================== */}
-
-                  <div className="sm:min-w-[170px] sm:text-right">
-
-                    <span className="inline-block rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-400">
-                      {order.status ||
-                        "COMPLETED"}
-                    </span>
-
-                    <p className="mt-2 text-sm text-gray-400">
-                      {formatDate(
-                        order.createdAt
-                      )}
-                    </p>
-
-                  </div>
-
-                </div>
-              );
-            }
-          )}
-
+                    <td className="py-3 text-right text-slate-500 text-[11px] font-sans">
+                      {formatDate(order.createdAt)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
-
-      {/* ================================= */}
-      {/* SHOWING LIMIT */}
-      {/* ================================= */}
-
-      {limit &&
-        orders.length > limit && (
-          <p className="mt-4 text-center text-xs text-gray-500">
-            Showing the latest {limit}{" "}
-            orders
-          </p>
-        )}
-
     </div>
   );
 }
 
 export default OrderHistory;
-

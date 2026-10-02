@@ -3,7 +3,9 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   collection,
+  collectionGroup,
   addDoc,
   getDocs,
   serverTimestamp,
@@ -69,7 +71,9 @@ export async function saveUserWallet(
   await setDoc(
     walletRef,
     wallet,
-    { merge: true }
+    {
+      merge: true,
+    }
   );
 }
 
@@ -115,11 +119,16 @@ export async function getUserOrders(
 
   const ordersQuery = query(
     ordersRef,
-    orderBy("createdAt", "desc")
+    orderBy(
+      "createdAt",
+      "desc"
+    )
   );
 
   const ordersSnapshot =
-    await getDocs(ordersQuery);
+    await getDocs(
+      ordersQuery
+    );
 
   return ordersSnapshot.docs.map(
     (orderDoc) => {
@@ -138,6 +147,37 @@ export async function getUserOrders(
     }
   );
 }
+
+
+// ==========================================
+// SAVE SUPPORT TICKET
+// ==========================================
+
+export async function saveSupportTicket(
+  userId,
+  ticket
+) {
+  const ticketsRef = collection(
+    db,
+    "users",
+    userId,
+    "supportTickets"
+  );
+
+  const ticketRef = await addDoc(
+    ticketsRef,
+    {
+      ...ticket,
+      userId,
+      status: ticket.status || "open",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }
+  );
+
+  return ticketRef.id;
+}
+
 
 // ==========================================
 // SAVE WALLET TRANSACTION
@@ -160,7 +200,8 @@ export async function saveWalletTransaction(
       transactionsRef,
       {
         ...transaction,
-        createdAt: serverTimestamp(),
+        createdAt:
+          serverTimestamp(),
       }
     );
 
@@ -185,7 +226,10 @@ export async function getWalletTransactions(
   const transactionsQuery =
     query(
       transactionsRef,
-      orderBy("createdAt", "desc")
+      orderBy(
+        "createdAt",
+        "desc"
+      )
     );
 
   const transactionsSnapshot =
@@ -211,3 +255,107 @@ export async function getWalletTransactions(
   );
 }
 
+
+// ADMIN UPDATE SUPPORT TICKET
+export async function updateSupportTicket(
+  ticketUserId,
+  ticketId,
+  updates
+) {
+  const ticketRef = doc(
+    db,
+    "users",
+    ticketUserId,
+    "supportTickets",
+    ticketId
+  );
+
+  await updateDoc(ticketRef, {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+}
+// ==========================================
+// GET USER SUPPORT TICKETS
+// ==========================================
+
+export async function getSupportTickets(
+  userId
+) {
+  const ticketsRef = collection(
+    db,
+    "users",
+    userId,
+    "supportTickets"
+  );
+
+  const ticketsQuery = query(
+    ticketsRef,
+    orderBy(
+      "createdAt",
+      "desc"
+    )
+  );
+
+  const ticketsSnapshot =
+    await getDocs(
+      ticketsQuery
+    );
+
+  return ticketsSnapshot.docs.map(
+    (ticketDoc) => {
+      const data =
+        ticketDoc.data();
+
+      return {
+        id: ticketDoc.id,
+        ...data,
+
+        createdAt:
+          data.createdAt?.toDate
+            ? data.createdAt.toDate()
+            : null,
+
+        updatedAt:
+          data.updatedAt?.toDate
+            ? data.updatedAt.toDate()
+            : null,
+      };
+    }
+  );
+}
+
+// GET ALL SUPPORT TICKETS - ADMIN
+export async function getAllSupportTickets() {
+  const ticketsQuery = query(
+    collectionGroup(db, "supportTickets")
+  );
+
+  const ticketsSnapshot = await getDocs(ticketsQuery);
+
+  const tickets = ticketsSnapshot.docs.map((ticketDoc) => {
+    const data = ticketDoc.data();
+
+    return {
+      id: ticketDoc.id,
+      ...data,
+      createdAt: data.createdAt?.toDate
+        ? data.createdAt.toDate()
+        : null,
+      updatedAt: data.updatedAt?.toDate
+        ? data.updatedAt.toDate()
+        : null,
+      userId: ticketDoc.ref.parent.parent?.id || null,
+    };
+  });
+
+  // Sort newest tickets first
+  tickets.sort((a, b) => {
+    if (!a.createdAt) return 1;
+    if (!b.createdAt) return -1;
+
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
+
+  return tickets;
+}

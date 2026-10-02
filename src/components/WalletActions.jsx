@@ -1,120 +1,71 @@
-
 import { useState } from "react";
 import { useTrading } from "../context/TradingContext";
+import { ArrowDownLeft, ArrowUpRight, Copy, Check, QrCode, Shield, RefreshCw } from "lucide-react";
 
 function WalletActions() {
-  const {
-    wallet,
-    depositUSDT,
-    withdrawUSDT,
-  } = useTrading();
+  const { wallet, depositUSDT, withdrawUSDT, notify } = useTrading();
 
-  const [type, setType] = useState(null);
+  const [activeModal, setActiveModal] = useState(null); // "deposit" | "withdraw"
+  const [network, setNetwork] = useState("TRC20");
   const [amount, setAmount] = useState("");
+  const [address, setAddress] = useState("");
+  const [copied, setCopied] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  const amountNumber = Number(amount) || 0;
+  const currentUSDT = Number(wallet?.USDT || 0);
 
-  const currentUSDT =
-    Number(wallet?.USDT || 0);
-
-  // ==========================================
-  // OPEN MODAL
-  // ==========================================
-
-  const openModal = (action) => {
-    setType(action);
-    setAmount("");
+  const mockAddresses = {
+    TRC20: "TQn9Y2khEsLJW1ChV8m4KkXo8xP9N1G2a4",
+    ERC20: "0x71C...B29f849452474E72",
+    BEP20: "0x3eF...91c3dE9047240182",
+    SOL: "4k3Dyjzv58yzmZW1Kc...7zP8u",
   };
 
-  // ==========================================
-  // CLOSE MODAL
-  // ==========================================
-
-  const closeModal = () => {
-    if (processing) return;
-
-    setType(null);
-    setAmount("");
+  const handleCopy = () => {
+    const addr = mockAddresses[network] || mockAddresses.TRC20;
+    navigator.clipboard?.writeText(addr);
+    setCopied(true);
+    notify("Deposit address copied to clipboard!", "success");
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  // ==========================================
-  // HANDLE ACTION
-  // ==========================================
-
-  const handleAction = async () => {
-    if (processing) return;
-
-    // Validate input
-    if (!amount.trim()) {
-      alert("Please enter an amount.");
-      return;
-    }
-
-    if (
-      !Number.isFinite(amountNumber) ||
-      amountNumber <= 0
-    ) {
-      alert("Enter a valid amount.");
-      return;
-    }
-
-    // Maximum 2 decimal places
-    if (!Number.isInteger(amountNumber * 100)) {
-      alert(
-        "Please enter an amount with no more than 2 decimal places."
-      );
+  const handleDepositSubmit = async () => {
+    const val = Number(amount);
+    if (!val || val <= 0) {
+      notify("Please enter a valid deposit amount.", "error");
       return;
     }
 
     setProcessing(true);
-
     try {
-      let result;
+      await depositUSDT(val, network);
+      setActiveModal(null);
+      setAmount("");
+    } finally {
+      setProcessing(false);
+    }
+  };
 
-      // ========================================
-      // DEPOSIT
-      // ========================================
+  const handleWithdrawSubmit = async () => {
+    const val = Number(amount);
+    if (!val || val <= 0) {
+      notify("Please enter a valid withdrawal amount.", "error");
+      return;
+    }
 
-      if (type === "deposit") {
-        result = await depositUSDT(
-          amountNumber
-        );
-      }
+    if (!address.trim()) {
+      notify("Please enter a valid recipient address.", "error");
+      return;
+    }
 
-      // ========================================
-      // WITHDRAW
-      // ========================================
-
-      if (type === "withdraw") {
-        result = await withdrawUSDT(
-          amountNumber
-        );
-      }
-
-      // ========================================
-      // RESULT
-      // ========================================
-
-      if (result?.success) {
-        alert(result.message);
-        setType(null);
+    setProcessing(true);
+    try {
+      const res = await withdrawUSDT(val, address, network);
+      if (res?.success) {
+        setActiveModal(null);
         setAmount("");
-      } else {
-        alert(
-          result?.message ||
-            "Transaction failed."
-        );
+        setAddress("");
       }
-    } catch (error) {
-      console.error(
-        "Wallet action error:",
-        error
-      );
-
-      alert(
-        "Transaction failed. Please try again."
-      );
     } finally {
       setProcessing(false);
     }
@@ -122,256 +73,193 @@ function WalletActions() {
 
   return (
     <>
-      {/* ===================================== */}
       {/* ACTION BUTTONS */}
-      {/* ===================================== */}
-
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-
+      <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() =>
-            openModal("deposit")
-          }
-          disabled={processing}
-          className="
-            rounded-lg
-            bg-[#D4AF37]
-            py-3
-            font-bold
-            text-black
-            transition
-            hover:bg-[#f0c94d]
-            disabled:cursor-not-allowed
-            disabled:opacity-50
-          "
+          onClick={() => {
+            setActiveModal("deposit");
+            setAmount("1000");
+          }}
+          className="flex items-center justify-center gap-2 rounded-xl bg-[#0ecb81] py-3 text-xs font-black text-black hover:bg-[#0bb371] transition shadow-lg shadow-[#0ecb81]/20"
         >
-          Deposit
+          <ArrowDownLeft size={16} />
+          <span>Deposit USDT</span>
         </button>
 
         <button
           type="button"
-          onClick={() =>
-            openModal("withdraw")
-          }
-          disabled={processing}
-          className="
-            rounded-lg
-            bg-blue-800
-            py-3
-            font-bold
-            text-white
-            transition
-            hover:bg-blue-600
-            disabled:cursor-not-allowed
-            disabled:opacity-50
-          "
+          onClick={() => {
+            setActiveModal("withdraw");
+            setAmount("");
+          }}
+          className="flex items-center justify-center gap-2 rounded-xl bg-slate-800 py-3 text-xs font-black text-white hover:bg-slate-700 transition border border-slate-700"
         >
-          Withdraw
+          <ArrowUpRight size={16} />
+          <span>Withdraw USDT</span>
         </button>
-
       </div>
 
-      {/* ===================================== */}
       {/* MODAL */}
-      {/* ===================================== */}
-
-      {type && (
+      {activeModal && (
         <div
-          className="
-            fixed
-            inset-0
-            z-50
-            flex
-            items-center
-            justify-center
-            bg-black/70
-            px-4
-          "
-          onClick={(event) => {
-            if (
-              event.target ===
-                event.currentTarget &&
-              !processing
-            ) {
-              closeModal();
-            }
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !processing) setActiveModal(null);
           }}
         >
-
-          <div
-            className="
-              w-full
-              max-w-md
-              rounded-xl
-              border
-              border-slate-800
-              bg-slate-900
-              p-6
-              shadow-2xl
-            "
-          >
-
-            {/* TITLE */}
-
-            <h2 className="text-2xl font-bold text-white">
-              {type === "deposit"
-                ? "Deposit USDT"
-                : "Withdraw USDT"}
-            </h2>
-
-            <p className="mt-2 text-sm text-gray-400">
-              {type === "deposit"
-                ? "Add simulated USDT to your paper trading wallet."
-                : "Remove simulated USDT from your paper trading wallet."}
-            </p>
-
-            {/* BALANCE */}
-
-            <div
-              className="
-                mt-5
-                rounded-lg
-                border
-                border-slate-800
-                bg-slate-950
-                p-4
-              "
-            >
-              <p className="text-sm text-gray-400">
-                Available USDT
-              </p>
-
-              <p className="mt-1 text-xl font-bold text-[#D4AF37]">
-                ${currentUSDT.toFixed(2)}
-              </p>
-            </div>
-
-            {/* INPUT */}
-
-            <div className="mt-5">
-
-              <label className="mb-2 block text-sm font-medium text-gray-400">
-                Amount (USDT)
-              </label>
-
-              <div className="relative">
-
-                <span
-                  className="
-                    absolute
-                    left-3
-                    top-1/2
-                    -translate-y-1/2
-                    text-gray-500
-                  "
-                >
-                  $
-                </span>
-
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) =>
-                    setAmount(e.target.value)
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleAction();
-                    }
-
-                    if (e.key === "Escape") {
-                      closeModal();
-                    }
-                  }}
-                  placeholder="1000.00"
-                  disabled={processing}
-                  className="
-                    w-full
-                    rounded-lg
-                    border
-                    border-slate-800
-                    bg-slate-950
-                    p-3
-                    pl-8
-                    text-white
-                    outline-none
-                    transition
-                    focus:border-[#D4AF37]
-                    disabled:cursor-not-allowed
-                    disabled:opacity-50
-                  "
-                />
-
+          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-[#0c101a] p-6 shadow-2xl space-y-4">
+            {/* Title */}
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <div>
+                <h3 className="text-lg font-black text-white">
+                  {activeModal === "deposit" ? "Deposit USDT" : "Withdraw USDT"}
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {activeModal === "deposit"
+                    ? "Instant simulated blockchain credit"
+                    : "Simulated paper trading transfer"}
+                </p>
               </div>
-
-            </div>
-
-            {/* ACTIONS */}
-
-            <div className="mt-6 grid grid-cols-2 gap-3">
-
               <button
                 type="button"
-                onClick={closeModal}
+                onClick={() => setActiveModal(null)}
+                className="text-slate-500 hover:text-white text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Network Selector */}
+            <div>
+              <label className="text-xs font-semibold text-slate-400 mb-1.5 block">
+                Select Network
+              </label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {["TRC20", "ERC20", "BEP20", "SOL"].map((net) => (
+                  <button
+                    key={net}
+                    type="button"
+                    onClick={() => setNetwork(net)}
+                    className={`rounded-lg py-2 text-xs font-bold font-mono transition ${
+                      network === net
+                        ? "bg-[#F0B90B] text-black"
+                        : "bg-slate-900 text-slate-400 hover:bg-slate-800 border border-slate-800"
+                    }`}
+                  >
+                    {net}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* DEPOSIT DETAILS (Address & QR) */}
+            {activeModal === "deposit" && (
+              <div className="space-y-3">
+                <div className="rounded-xl bg-[#121724] p-3 border border-slate-800/70">
+                  <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                    <span>Deposit Address ({network})</span>
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      className="flex items-center gap-1 text-[#F0B90B] hover:underline"
+                    >
+                      {copied ? <Check size={12} /> : <Copy size={12} />}
+                      <span>{copied ? "Copied!" : "Copy"}</span>
+                    </button>
+                  </div>
+                  <p className="font-mono text-xs text-white break-all">
+                    {mockAddresses[network]}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-400 mb-1 block">
+                    Amount to Credit (USDT)
+                  </label>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="1000.00"
+                    className="w-full rounded-xl border border-slate-800 bg-[#121724] p-3 text-sm font-mono text-white outline-none focus:border-[#0ecb81]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* WITHDRAW DETAILS */}
+            {activeModal === "withdraw" && (
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>Available Balance</span>
+                    <span className="font-mono text-[#F0B90B]">${currentUSDT.toFixed(2)} USDT</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder={`Enter ${network} destination address`}
+                    className="w-full rounded-xl border border-slate-800 bg-[#121724] p-3 text-xs font-mono text-white outline-none focus:border-[#F0B90B]"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs text-slate-400 mb-1">
+                    <span>Amount</span>
+                    <button
+                      type="button"
+                      onClick={() => setAmount(currentUSDT.toString())}
+                      className="text-xs text-[#F0B90B] font-bold hover:underline"
+                    >
+                      MAX
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full rounded-xl border border-slate-800 bg-[#121724] p-3 text-sm font-mono text-white outline-none focus:border-[#F0B90B]"
+                  />
+                </div>
+
+                <div className="rounded-xl bg-[#121724] p-2.5 text-[11px] text-slate-400 space-y-1">
+                  <div className="flex justify-between">
+                    <span>Network Fee</span>
+                    <span className="font-mono text-white">0.80 USDT</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Estimated Arrival</span>
+                    <span className="text-[#0ecb81]">Instant (Simulated)</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUBMIT BUTTON */}
+            <div className="pt-2">
+              <button
+                type="button"
                 disabled={processing}
-                className="
-                  rounded-lg
-                  bg-slate-800
-                  py-3
-                  font-bold
-                  text-gray-300
-                  transition
-                  hover:bg-slate-700
-                  disabled:cursor-not-allowed
-                  disabled:opacity-50
-                "
+                onClick={activeModal === "deposit" ? handleDepositSubmit : handleWithdrawSubmit}
+                className={`w-full rounded-xl py-3.5 text-xs font-black transition tracking-wider ${
+                  activeModal === "deposit"
+                    ? "bg-[#0ecb81] text-black hover:bg-[#0bb371]"
+                    : "bg-[#F0B90B] text-black hover:bg-[#fcd535]"
+                }`}
               >
-                Cancel
+                {processing ? (
+                  "Processing Transaction..."
+                ) : activeModal === "deposit" ? (
+                  "Simulate Instant Deposit Credit"
+                ) : (
+                  "Confirm & Process Withdrawal"
+                )}
               </button>
-
-              <button
-                type="button"
-                onClick={handleAction}
-                disabled={
-                  processing ||
-                  amountNumber <= 0
-                }
-                className={`
-                  rounded-lg
-                  py-3
-                  font-bold
-                  transition
-                  disabled:cursor-not-allowed
-                  disabled:opacity-50
-
-                  ${
-                    type === "deposit"
-                      ? "bg-[#D4AF37] text-black hover:bg-[#f0c94d]"
-                      : "bg-blue-700 text-white hover:bg-blue-600"
-                  }
-                `}
-              >
-                {processing
-                  ? "Processing..."
-                  : type === "deposit"
-                  ? "Deposit"
-                  : "Withdraw"}
-              </button>
-
             </div>
-
-            {/* DEMO NOTICE */}
-
-            <p className="mt-5 text-center text-xs text-gray-500">
-              This is a simulated paper-trading
-              wallet. No real funds are transferred.
-            </p>
-
           </div>
-
         </div>
       )}
     </>
@@ -379,4 +267,3 @@ function WalletActions() {
 }
 
 export default WalletActions;
-

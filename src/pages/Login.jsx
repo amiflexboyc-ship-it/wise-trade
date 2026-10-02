@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 import { useTrading } from "../context/TradingContext";
-import { Lock, Mail, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Lock, Mail, ShieldCheck, ArrowRight } from "lucide-react";
 
-function Register() {
+function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -22,35 +21,22 @@ function Register() {
     }
   }, [user, navigate]);
 
-  const handleRegister = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg("");
-
-    if (password !== confirmPassword) {
-      setErrorMsg("Passwords do not match. Please re-enter.");
-      return;
-    }
-
-    if (password.length < 6) {
-      setErrorMsg("Password must be at least 6 characters long.");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      notify("Account created successfully! Welcome to WiseTrade.", "success");
+      await signInWithEmailAndPassword(auth, email, password);
+      notify("Welcome back! Login successful.", "success");
       navigate("/dashboard");
     } catch (error) {
-      console.warn("Registration error:", error);
-      let msg = "Failed to create account. Please try again.";
-      if (error.code === "auth/email-already-in-use") {
-        msg = "This email is already registered. Please sign in instead.";
-      } else if (error.code === "auth/invalid-email") {
-        msg = "Please enter a valid email address.";
-      } else if (error.code === "auth/weak-password") {
-        msg = "Password is too weak. Please choose a stronger password.";
+      console.warn("Firebase login failed:", error);
+      let msg = "Failed to sign in. Please verify your credentials.";
+      if (error.code === "auth/invalid-credential" || error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
+        msg = "Invalid email or password. Please check your credentials or create a new account.";
+      } else if (error.code === "auth/too-many-requests") {
+        msg = "Access temporarily disabled due to too many failed attempts. Please try again later.";
       }
       setErrorMsg(msg);
     } finally {
@@ -61,13 +47,13 @@ function Register() {
   return (
     <div className="min-h-screen bg-[#07090e] flex items-center justify-center px-4 py-12 relative overflow-hidden">
       {/* Background glow */}
-      <div className="pointer-events-none absolute -top-40 -right-40 h-96 w-96 rounded-full bg-[#F0B90B]/10 blur-[130px]" />
-      <div className="pointer-events-none absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-[#0ecb81]/10 blur-[130px]" />
+      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-[#F0B90B]/10 blur-[130px]" />
+      <div className="pointer-events-none absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-[#0ecb81]/10 blur-[130px]" />
 
       <div className="w-full max-w-md rounded-3xl border border-slate-800/90 bg-[#0c101a] p-8 shadow-2xl relative z-10 space-y-6">
         {/* LOGO */}
         <div className="text-center space-y-2">
-          <Link to="/register" className="inline-flex items-center gap-2">
+          <Link to="/login" className="inline-flex items-center gap-2">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-tr from-[#F0B90B] to-[#fcd535] text-black font-black text-2xl shadow-lg shadow-[#F0B90B]/20">
               W
             </div>
@@ -76,23 +62,17 @@ function Register() {
             </span>
           </Link>
           <div className="pt-2">
-            <h2 className="text-xl font-bold text-white">Create Trader Account</h2>
+            <h2 className="text-xl font-bold text-white">Sign in to WiseTrade</h2>
             <p className="text-xs text-slate-400 mt-1">
-              Register now to unlock the trading terminal and $10,000 portfolio
+              Authentication required to access spot markets & trading terminal
             </p>
           </div>
         </div>
 
-        {/* PERKS CHIPS */}
-        <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
-          <div className="flex items-center gap-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 p-2.5">
-            <CheckCircle2 size={13} className="text-[#0ecb81] shrink-0" />
-            <span>$10,000 Sandbox Fund</span>
-          </div>
-          <div className="flex items-center gap-1.5 rounded-xl bg-slate-900/90 border border-slate-800/80 p-2.5">
-            <CheckCircle2 size={13} className="text-[#0ecb81] shrink-0" />
-            <span>Real-time Binance Feeds</span>
-          </div>
+        {/* SECURITY BADGE */}
+        <div className="flex items-center justify-center gap-2 rounded-xl bg-slate-900/80 border border-slate-800 py-2 px-3 text-[11px] text-slate-300">
+          <ShieldCheck size={14} className="text-[#0ecb81]" />
+          <span>Encrypted 256-Bit SSL Institutional Gate</span>
         </div>
 
         {/* Error message */}
@@ -103,7 +83,7 @@ function Register() {
         )}
 
         {/* FORM */}
-        <form onSubmit={handleRegister} className="space-y-4 text-xs">
+        <form onSubmit={handleLogin} className="space-y-4 text-xs">
           <div>
             <label className="text-slate-300 font-semibold mb-1 block" htmlFor="email">
               Email Address
@@ -134,25 +114,7 @@ function Register() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
-                className="w-full rounded-xl border border-slate-800 bg-[#121724] py-3 pl-10 pr-4 text-xs text-white outline-none focus:border-[#F0B90B] transition"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-slate-300 font-semibold mb-1 block" htmlFor="confirmPassword">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-              <input
-                id="confirmPassword"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Repeat password"
+                placeholder="••••••••••••"
                 className="w-full rounded-xl border border-slate-800 bg-[#121724] py-3 pl-10 pr-4 text-xs text-white outline-none focus:border-[#F0B90B] transition"
               />
             </div>
@@ -163,7 +125,7 @@ function Register() {
             disabled={loading}
             className="w-full rounded-xl bg-[#F0B90B] py-3.5 text-xs font-black text-black hover:bg-[#fcd535] transition shadow-lg shadow-[#F0B90B]/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>{loading ? "Creating Account..." : "Create Account & Start Trading"}</span>
+            <span>{loading ? "Authenticating..." : "Sign In to Account"}</span>
             <ArrowRight size={14} />
           </button>
         </form>
@@ -188,9 +150,9 @@ function Register() {
         </button>
 
         <div className="pt-2 text-center text-xs text-slate-400 border-t border-slate-800/80">
-          Already registered?{" "}
-          <Link to="/login" className="text-[#F0B90B] font-bold hover:underline">
-            Sign in here
+          New to WiseTrade?{" "}
+          <Link to="/register" className="text-[#F0B90B] font-bold hover:underline">
+            Create an account
           </Link>
         </div>
       </div>
@@ -198,4 +160,4 @@ function Register() {
   );
 }
 
-export default Register;
+export default Login;
