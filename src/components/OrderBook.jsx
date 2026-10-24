@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { TrendingUp } from "lucide-react";
 import { generateOrderBook } from "../Services/MarketApi";
 
 function OrderBook({ currentPrice = 88450 }) {
@@ -68,8 +69,9 @@ function OrderBook({ currentPrice = 88450 }) {
         <span className="text-sm font-black text-white tabular-nums">
           ${currentPrice ? currentPrice.toLocaleString(undefined, { minimumFractionDigits: currentPrice > 10 ? 2 : 4 }) : "--"}
         </span>
-        <span className="text-[10px] text-[#0ecb81] font-bold">
-          ▲ Market Index
+        <span className="text-[10px] text-[#0ecb81] font-bold flex items-center gap-1">
+          <TrendingUp size={12} />
+          <span>Market Index</span>
         </span>
       </div>
 

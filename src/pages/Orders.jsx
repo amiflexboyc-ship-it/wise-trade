@@ -126,115 +126,180 @@ function Orders() {
           </div>
         </div>
 
-        {/* ORDERS TABLE */}
+        {/* ORDERS LIST / TABLE */}
         <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-[#0c101a] shadow-xl">
           {filteredOrders.length === 0 ? (
-            <div className="p-12 text-center text-slate-500 text-sm">
+            <div className="p-8 sm:p-12 text-center text-slate-500 text-xs sm:text-sm">
               No orders found matching filter criteria.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[950px] text-left text-xs">
-                <thead className="border-b border-slate-800/80 bg-[#090d16] text-slate-400 uppercase font-semibold">
-                  <tr>
-                    <th className="py-4 px-5">Order ID</th>
-                    <th className="py-4 px-5">Market Pair</th>
-                    <th className="py-4 px-5">Side</th>
-                    <th className="py-4 px-5">Quantity</th>
-                    <th className="py-4 px-5">Execution Price</th>
-                    <th className="py-4 px-5">Order Total (USDT)</th>
-                    <th className="py-4 px-5">Status</th>
-                    <th className="py-4 px-5">Time</th>
-                    <th className="py-4 px-5 text-right">Action</th>
-                  </tr>
-                </thead>
+            <>
+              {/* MOBILE CARDS VIEW (Visible only on < md screens) */}
+              <div className="divide-y divide-slate-800/60 md:hidden">
+                {filteredOrders.map((order, index) => {
+                  const side = String(order.side || "").toUpperCase();
+                  const status = String(order.status || "COMPLETED").toUpperCase();
 
-                <tbody className="divide-y divide-slate-800/40 font-mono">
-                  {filteredOrders.map((order, index) => {
-                    const side = String(order.side || "").toUpperCase();
-                    const status = String(order.status || "COMPLETED").toUpperCase();
-
-                    return (
-                      <tr key={order.id || index} className="hover:bg-slate-800/40 transition">
-                        {/* Order ID */}
-                        <td className="py-4 px-5 text-slate-500 text-[11px]">
-                          {order.id?.slice(0, 12) || `ord-${index}`}
-                        </td>
-
-                        {/* Market Pair */}
-                        <td className="py-4 px-5 font-sans font-bold text-white text-sm">
-                          {order.symbol || "BTC/USDT"}
-                        </td>
-
-                        {/* Side */}
-                        <td className="py-4 px-5">
+                  return (
+                    <div key={order.id || index} className="p-4 space-y-3 hover:bg-slate-800/20 transition">
+                      {/* Card Top: Pair, Side, Status */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-white text-sm">
+                            {order.symbol || "BTC/USDT"}
+                          </span>
                           <span
-                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-black ${
+                            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-black ${
                               side === "BUY"
                                 ? "bg-[#0ecb81]/15 text-[#0ecb81] border border-[#0ecb81]/30"
                                 : "bg-[#f6465d]/15 text-[#f6465d] border border-[#f6465d]/30"
                             }`}
                           >
-                            {side === "BUY" ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+                            {side === "BUY" ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
                             {side}
                           </span>
-                        </td>
+                        </div>
 
-                        {/* Quantity */}
-                        <td className="py-4 px-5 text-white font-bold tabular-nums">
-                          {Number(order.amount || 0).toFixed(4)}
-                        </td>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            status === "COMPLETED"
+                              ? "bg-[#0ecb81]/15 text-[#0ecb81]"
+                              : status === "CANCELLED"
+                              ? "bg-slate-800 text-slate-500"
+                              : "bg-[#F0B90B]/15 text-[#F0B90B]"
+                          }`}
+                        >
+                          {status}
+                        </span>
+                      </div>
 
-                        {/* Price */}
-                        <td className="py-4 px-5 text-slate-300 tabular-nums">
-                          ${Number(order.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </td>
+                      {/* Card Details Grid */}
+                      <div className="grid grid-cols-3 gap-2 text-xs font-mono bg-[#121724] p-2.5 rounded-xl border border-slate-800/80">
+                        <div>
+                          <p className="text-[10px] text-slate-500 font-sans">Amount</p>
+                          <p className="text-white font-bold tabular-nums mt-0.5">
+                            {Number(order.amount || 0).toFixed(4)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-slate-500 font-sans">Price</p>
+                          <p className="text-slate-300 tabular-nums mt-0.5">
+                            ${Number(order.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] text-slate-500 font-sans">Total</p>
+                          <p className="text-[#F0B90B] font-bold tabular-nums mt-0.5">
+                            ${Number(order.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </p>
+                        </div>
+                      </div>
 
-                        {/* Total */}
-                        <td className="py-4 px-5 text-[#F0B90B] font-bold tabular-nums text-sm">
-                          ${Number(order.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </td>
-
-                        {/* Status */}
-                        <td className="py-4 px-5 font-sans">
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                              status === "COMPLETED"
-                                ? "bg-[#0ecb81]/15 text-[#0ecb81]"
-                                : status === "CANCELLED"
-                                ? "bg-slate-800 text-slate-500"
-                                : "bg-[#F0B90B]/15 text-[#F0B90B]"
-                            }`}
+                      {/* Card Footer: Time and Action */}
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                        <span>{formatDate(order.createdAt || order.timestamp)}</span>
+                        {status === "PENDING" && (
+                          <button
+                            type="button"
+                            onClick={() => cancelOrder(order.id)}
+                            className="text-xs text-red-400 hover:text-red-300 underline font-semibold"
                           >
-                            {status}
-                          </span>
-                        </td>
+                            Cancel Order
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-                        {/* Time */}
-                        <td className="py-4 px-5 text-slate-500 text-[11px] font-sans">
-                          {formatDate(order.createdAt || order.timestamp)}
-                        </td>
+              {/* DESKTOP TABLE VIEW (Visible on >= md screens) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full min-w-[850px] text-left text-xs">
+                  <thead className="border-b border-slate-800/80 bg-[#090d16] text-slate-400 uppercase font-semibold">
+                    <tr>
+                      <th className="py-4 px-5">Order ID</th>
+                      <th className="py-4 px-5">Market Pair</th>
+                      <th className="py-4 px-5">Side</th>
+                      <th className="py-4 px-5">Quantity</th>
+                      <th className="py-4 px-5">Execution Price</th>
+                      <th className="py-4 px-5">Order Total (USDT)</th>
+                      <th className="py-4 px-5">Status</th>
+                      <th className="py-4 px-5">Time</th>
+                      <th className="py-4 px-5 text-right">Action</th>
+                    </tr>
+                  </thead>
 
-                        {/* Action */}
-                        <td className="py-4 px-5 text-right font-sans">
-                          {status === "PENDING" ? (
-                            <button
-                              type="button"
-                              onClick={() => cancelOrder(order.id)}
-                              className="text-xs text-red-400 hover:text-red-300 underline font-semibold"
+                  <tbody className="divide-y divide-slate-800/40 font-mono">
+                    {filteredOrders.map((order, index) => {
+                      const side = String(order.side || "").toUpperCase();
+                      const status = String(order.status || "COMPLETED").toUpperCase();
+
+                      return (
+                        <tr key={order.id || index} className="hover:bg-slate-800/40 transition">
+                          <td className="py-4 px-5 text-slate-500 text-[11px]">
+                            {order.id?.slice(0, 12) || `ord-${index}`}
+                          </td>
+                          <td className="py-4 px-5 font-sans font-bold text-white text-sm">
+                            {order.symbol || "BTC/USDT"}
+                          </td>
+                          <td className="py-4 px-5">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-black ${
+                                side === "BUY"
+                                  ? "bg-[#0ecb81]/15 text-[#0ecb81] border border-[#0ecb81]/30"
+                                  : "bg-[#f6465d]/15 text-[#f6465d] border border-[#f6465d]/30"
+                              }`}
                             >
-                              Cancel
-                            </button>
-                          ) : (
-                            <span className="text-slate-600 text-xs">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                              {side === "BUY" ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+                              {side}
+                            </span>
+                          </td>
+                          <td className="py-4 px-5 text-white font-bold tabular-nums">
+                            {Number(order.amount || 0).toFixed(4)}
+                          </td>
+                          <td className="py-4 px-5 text-slate-300 tabular-nums">
+                            ${Number(order.price || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                          <td className="py-4 px-5 text-[#F0B90B] font-bold tabular-nums text-sm">
+                            ${Number(order.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+                          <td className="py-4 px-5 font-sans">
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                                status === "COMPLETED"
+                                  ? "bg-[#0ecb81]/15 text-[#0ecb81]"
+                                  : status === "CANCELLED"
+                                  ? "bg-slate-800 text-slate-500"
+                                  : "bg-[#F0B90B]/15 text-[#F0B90B]"
+                              }`}
+                            >
+                              {status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-5 text-slate-500 text-[11px] font-sans">
+                            {formatDate(order.createdAt || order.timestamp)}
+                          </td>
+                          <td className="py-4 px-5 text-right font-sans">
+                            {status === "PENDING" ? (
+                              <button
+                                type="button"
+                                onClick={() => cancelOrder(order.id)}
+                                className="text-xs text-red-400 hover:text-red-300 underline font-semibold"
+                              >
+                                Cancel
+                              </button>
+                            ) : (
+                              <span className="text-slate-600 text-xs">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

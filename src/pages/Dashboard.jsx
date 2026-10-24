@@ -98,7 +98,7 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07090e] px-4 py-6 text-white sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#07090e] p-3 sm:p-6 lg:p-8 text-white">
       <div className="mx-auto max-w-[1700px] space-y-6">
         {/* TOP WELCOME & VIP HEADER */}
         <header className="flex flex-col gap-4 rounded-2xl border border-slate-800/80 bg-gradient-to-r from-[#0c101a] via-[#111726] to-[#0c101a] p-5 sm:p-6 sm:flex-row sm:items-center sm:justify-between shadow-2xl">
@@ -300,8 +300,9 @@ function Dashboard() {
             <div className="rounded-2xl border border-slate-800/80 bg-[#0c101a] p-4 sm:p-5 shadow-xl">
               <div className="flex items-center justify-between border-b border-slate-800/70 pb-3 mb-3">
                 <h3 className="font-bold text-sm text-white">Live Market Watchlist</h3>
-                <Link to="/market" className="text-xs text-[#F0B90B] hover:underline">
-                  All Markets →
+                <Link to="/market" className="text-xs text-[#F0B90B] hover:underline flex items-center gap-1">
+                  <span>All Markets</span>
+                  <ChevronRight size={13} />
                 </Link>
               </div>
 

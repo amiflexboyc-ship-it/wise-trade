@@ -24,7 +24,7 @@ function Support() {
   const [messages, setMessages] = useState([
     {
       sender: "ai",
-      text: "Hello 👋 I'm the WiseTrade AI Support Assistant. How can I help you today with your trading account, deposits, orders, or platform tools?",
+      text: "Hello! I'm the WiseTrade AI Support Assistant. How can I help you today with your trading account, deposits, orders, or platform tools?",
     },
   ]);
   const [sending, setSending] = useState(false);
@@ -214,9 +214,9 @@ function Support() {
         {/* MAIN SPLIT: AI CHAT + FAQ / TICKETS */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* AI CHAT ASSISTANT (7 COLS) */}
-          <div className="lg:col-span-7 rounded-2xl border border-slate-800/80 bg-[#0c101a] flex flex-col h-[600px] shadow-xl overflow-hidden">
+          <div className="lg:col-span-7 rounded-2xl border border-slate-800/80 bg-[#0c101a] flex flex-col h-[480px] sm:h-[560px] md:h-[600px] shadow-xl overflow-hidden">
             {/* Chat Header */}
-            <div className="flex items-center justify-between border-b border-slate-800/80 bg-[#090d16] px-5 py-3.5">
+            <div className="flex items-center justify-between border-b border-slate-800/80 bg-[#090d16] px-4 sm:px-5 py-3.5">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F0B90B]/15 text-[#F0B90B] border border-[#F0B90B]/30">
                   <Bot size={18} />
@@ -236,7 +236,7 @@ function Support() {
             </div>
 
             {/* Chat Body */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3">
               {messages.map((m, idx) => (
                 <div
                   key={idx}
@@ -249,7 +249,7 @@ function Support() {
                   )}
 
                   <div
-                    className={`max-w-[80%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+                    className={`max-w-[85%] sm:max-w-[80%] break-words rounded-2xl p-3 sm:p-3.5 text-xs leading-relaxed ${
                       m.sender === "user"
                         ? "bg-[#F0B90B] text-black font-semibold rounded-tr-none shadow-md"
                         : "bg-[#121724] text-slate-200 border border-slate-800/70 rounded-tl-none shadow-md"
@@ -405,7 +405,7 @@ function Support() {
               if (e.target === e.currentTarget) setShowTicketModal(false);
             }}
           >
-            <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-[#0c101a] p-6 shadow-2xl space-y-4">
+            <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-800 bg-[#0c101a] p-5 sm:p-6 shadow-2xl space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
                 <h3 className="text-lg font-bold text-white">Create Support Ticket</h3>
                 <button
@@ -413,7 +413,7 @@ function Support() {
                   onClick={() => setShowTicketModal(false)}
                   className="text-slate-500 hover:text-white"
                 >
-                  ✕
+                  <X size={18} />
                 </button>
               </div>
 

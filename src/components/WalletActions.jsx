@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTrading } from "../context/TradingContext";
-import { ArrowDownLeft, ArrowUpRight, Copy, Check, QrCode, Shield, RefreshCw } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Copy, Check, QrCode, Shield, RefreshCw, X } from "lucide-react";
 
 function WalletActions() {
   const { wallet, depositUSDT, withdrawUSDT, notify } = useTrading();
@@ -108,7 +108,7 @@ function WalletActions() {
             if (e.target === e.currentTarget && !processing) setActiveModal(null);
           }}
         >
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-[#0c101a] p-6 shadow-2xl space-y-4">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-800 bg-[#0c101a] p-5 sm:p-6 shadow-2xl space-y-4">
             {/* Title */}
             <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
               <div>
@@ -124,9 +124,9 @@ function WalletActions() {
               <button
                 type="button"
                 onClick={() => setActiveModal(null)}
-                className="text-slate-500 hover:text-white text-sm"
+                className="text-slate-500 hover:text-white"
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
 

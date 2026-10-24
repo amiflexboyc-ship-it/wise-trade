@@ -89,8 +89,9 @@ function Market() {
           </div>
 
           <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-            <span className="rounded-full bg-slate-800 px-3 py-1.5 border border-slate-700">
-              ⚡ Updated every 3.5s
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-800 px-3 py-1.5 border border-slate-700">
+              <Zap size={13} className="text-[#F0B90B]" />
+              <span>Updated every 3.5s</span>
             </span>
           </div>
         </div>
@@ -198,10 +199,58 @@ function Market() {
           </div>
         </div>
 
-        {/* FULL MARKET DATA TABLE */}
+        {/* FULL MARKET DATA LIST / TABLE */}
         <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-[#0c101a] shadow-2xl">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[950px] text-left text-xs">
+          {/* MOBILE LIST VIEW (Visible only on < md screens) */}
+          <div className="divide-y divide-slate-800/60 md:hidden">
+            {filteredMarkets.map((coin) => (
+              <div
+                key={coin.symbol}
+                onClick={() => handleTrade(coin.symbol)}
+                className="p-4 space-y-2.5 hover:bg-slate-800/30 cursor-pointer transition"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 font-black text-[#F0B90B] text-xs border border-slate-700">
+                      {coin.base.slice(0, 3)}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-white text-sm">{coin.base}</span>
+                        <span className="text-slate-400 font-medium text-xs">/USDT</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500">{coin.name}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-mono font-bold text-sm text-white tabular-nums">
+                      ${coin.price.toLocaleString(undefined, { minimumFractionDigits: coin.price > 10 ? 2 : 4 })}
+                    </p>
+                    <span
+                      className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold font-mono mt-0.5 ${
+                        coin.change24h >= 0
+                          ? "bg-[#0ecb81]/15 text-[#0ecb81] border border-[#0ecb81]/30"
+                          : "bg-[#f6465d]/15 text-[#f6465d] border border-[#f6465d]/30"
+                      }`}
+                    >
+                      {coin.change24h >= 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                      {coin.change24h >= 0 ? "+" : ""}{coin.change24h.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-slate-800/50 text-[11px] text-slate-400 font-mono">
+                  <span>Vol: ${coin.quoteVolume24h}</span>
+                  <span className="text-[#F0B90B] font-bold">Tap to trade →</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* DESKTOP TABLE VIEW (Visible on >= md screens) */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full min-w-[850px] text-left text-xs">
               <thead className="border-b border-slate-800/80 bg-[#090d16] text-slate-400 uppercase font-semibold">
                 <tr>
                   <th className="py-4 px-5">Pair</th>

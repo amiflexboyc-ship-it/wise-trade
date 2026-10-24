@@ -91,18 +91,18 @@ const Hero = () => {
           </div>
 
           {/* Statistics Grid */}
-          <div className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-800/80 max-w-lg mx-auto lg:mx-0 text-left">
+          <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-6 border-t border-slate-800/80 max-w-lg mx-auto lg:mx-0 text-left">
             <div>
-              <p className="text-2xl sm:text-3xl font-black text-[#F0B90B] tabular-nums">250K+</p>
-              <p className="text-xs text-slate-500 font-semibold mt-0.5">Active Traders</p>
+              <p className="text-xl sm:text-3xl font-black text-[#F0B90B] tabular-nums">250K+</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">Active Traders</p>
             </div>
             <div>
-              <p className="text-2xl sm:text-3xl font-black text-white tabular-nums">$4.8B</p>
-              <p className="text-xs text-slate-500 font-semibold mt-0.5">24h Simulated Vol</p>
+              <p className="text-xl sm:text-3xl font-black text-white tabular-nums">$4.8B</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">24h Simulated Vol</p>
             </div>
             <div>
-              <p className="text-2xl sm:text-3xl font-black text-[#0ecb81] tabular-nums">&lt;0.5ms</p>
-              <p className="text-xs text-slate-500 font-semibold mt-0.5">Matching Latency</p>
+              <p className="text-xl sm:text-3xl font-black text-[#0ecb81] tabular-nums">&lt;0.5ms</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">Matching Latency</p>
             </div>
           </div>
         </div>

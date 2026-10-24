@@ -125,19 +125,23 @@ function TradingChart() {
     lineSeries.applyOptions({ visible: chartType === "area" });
     maSeries.applyOptions({ visible: showMA });
 
-    const handleResize = () => {
-      if (chartContainer.current && chartRef.current) {
-        chartRef.current.applyOptions({
-          width: chartContainer.current.clientWidth,
-          height: window.innerWidth < 640 ? 320 : 420,
-        });
-      }
-    };
+    const initialWidth = chartContainer.current.clientWidth || 300;
+    const initialHeight = initialWidth < 480 ? 280 : initialWidth < 768 ? 340 : 420;
+    chart.applyOptions({ width: initialWidth, height: initialHeight });
 
-    window.addEventListener("resize", handleResize);
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (!entries || !entries.length || !chartRef.current) return;
+      const { width } = entries[0].contentRect;
+      if (width > 0) {
+        const height = width < 480 ? 280 : width < 768 ? 340 : 420;
+        chartRef.current.applyOptions({ width, height });
+      }
+    });
+
+    resizeObserver.observe(chartContainer.current);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
@@ -297,33 +301,33 @@ function TradingChart() {
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-slate-800/80 bg-[#0c101a] shadow-xl">
       {/* TERMINAL HEADER BAR */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/70 p-4">
+      <div className="flex flex-col gap-3 border-b border-slate-800/70 p-3 sm:p-4 md:flex-row md:items-center md:justify-between">
         {/* Pair selector & Current Price */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-5">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F0B90B]/15 text-sm font-black text-[#F0B90B] border border-[#F0B90B]/30">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F0B90B]/15 text-sm font-black text-[#F0B90B] border border-[#F0B90B]/30 shrink-0">
               {coinName.slice(0, 3)}
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-white tracking-wide">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h2 className="text-base sm:text-lg font-bold text-white tracking-wide">
                   {coinName}<span className="text-slate-400">/USDT</span>
                 </h2>
-                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-slate-400">
                   SPOT
                 </span>
               </div>
-              <p className="text-xs text-slate-400">WiseTrade Global Index</p>
+              <p className="text-[11px] text-slate-400">WiseTrade Global Index</p>
             </div>
           </div>
 
-          <div className="border-l border-slate-800 pl-4">
+          <div className="border-l border-slate-800 pl-3 sm:pl-4">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-black tabular-nums text-white tracking-tight">
+              <span className="text-xl sm:text-2xl font-black tabular-nums text-white tracking-tight">
                 ${formatPrice(price)}
               </span>
               <span
-                className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                className={`text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full ${
                   change >= 0
                     ? "bg-[#0ecb81]/15 text-[#0ecb81] border border-[#0ecb81]/30"
                     : "bg-[#f6465d]/15 text-[#f6465d] border border-[#f6465d]/30"
@@ -336,22 +340,22 @@ function TradingChart() {
         </div>
 
         {/* 24h Stats Ribbon */}
-        <div className="hidden xl:flex items-center gap-6 text-xs border-l border-slate-800 pl-6">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs text-slate-400 border-t border-slate-800/50 pt-2 md:border-t-0 md:pt-0">
           <div>
-            <p className="text-slate-500">24h High</p>
-            <p className="font-semibold text-white tabular-nums">${formatPrice(high24)}</p>
+            <p className="text-[10px] sm:text-xs text-slate-500">24h High</p>
+            <p className="font-semibold text-white tabular-nums text-xs sm:text-sm">${formatPrice(high24)}</p>
           </div>
           <div>
-            <p className="text-slate-500">24h Low</p>
-            <p className="font-semibold text-white tabular-nums">${formatPrice(low24)}</p>
+            <p className="text-[10px] sm:text-xs text-slate-500">24h Low</p>
+            <p className="font-semibold text-white tabular-nums text-xs sm:text-sm">${formatPrice(low24)}</p>
           </div>
           <div>
-            <p className="text-slate-500">24h Volume</p>
-            <p className="font-semibold text-white tabular-nums">${volume24 || "1.2B"}</p>
+            <p className="text-[10px] sm:text-xs text-slate-500">24h Volume</p>
+            <p className="font-semibold text-white tabular-nums text-xs sm:text-sm">${volume24 || "1.2B"}</p>
           </div>
-          <div className="flex items-center gap-1.5 text-[#0ecb81]">
-            <span className="h-2 w-2 rounded-full bg-[#0ecb81] animate-ping" />
-            <span className="font-semibold">Live WebSocket</span>
+          <div className="hidden sm:flex items-center gap-1.5 text-[#0ecb81]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#0ecb81] animate-ping" />
+            <span className="font-semibold text-[11px]">Live WebSocket</span>
           </div>
         </div>
       </div>

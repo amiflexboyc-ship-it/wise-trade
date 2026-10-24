@@ -100,7 +100,7 @@ function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#07090e] p-4 sm:p-6 lg:p-8 text-white">
+    <div className="min-h-screen bg-[#07090e] p-3 sm:p-6 lg:p-8 text-white">
       <div className="mx-auto max-w-[1700px] space-y-6">
         {/* HEADER */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800/80 pb-6">
@@ -156,8 +156,10 @@ function AdminDashboard() {
               <span>Simulated Active Accounts</span>
               <Users size={16} className="text-sky-400" />
             </div>
-            <p className="mt-2 text-3xl font-black text-white">12,480</p>
-            <p className="mt-1 text-xs text-sky-400">● 100% System Capacity</p>
+            <p className="mt-1 text-xs text-sky-400 flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+              <span>100% System Capacity</span>
+            </p>
           </div>
 
           <div className="rounded-2xl border border-slate-800/80 bg-[#0c101a] p-5 shadow-xl">

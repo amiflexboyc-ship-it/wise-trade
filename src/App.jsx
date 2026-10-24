@@ -63,6 +63,17 @@ function LandingPage() {
   );
 }
 
+function AppLayout({ children }) {
+  return (
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#07090e] text-white">
+      <Sidebar />
+      <main className="min-w-0 flex-1 pb-16 md:pb-0 overflow-x-hidden">
+        {children}
+      </main>
+    </div>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -86,112 +97,15 @@ function App() {
         {/* PROTECTED ROUTES (STRICT LOGIN REQUIRED) */}
         {/* ========================================= */}
         <Route element={<ProtectedRoute />}>
-          {/* DASHBOARD */}
-          <Route
-            path="/dashboard"
-            element={
-              <div className="flex min-h-screen bg-slate-950 text-white">
-                <Sidebar />
-                <main className="min-w-0 flex-1">
-                  <Dashboard />
-                </main>
-              </div>
-            }
-          />
-
-          {/* MARKET */}
-          <Route
-            path="/market"
-            element={
-              <div className="flex min-h-screen bg-slate-950 text-white">
-                <Sidebar />
-                <main className="min-w-0 flex-1">
-                  <Market />
-                </main>
-              </div>
-            }
-          />
-
-          {/* SPOT TRADING */}
-          <Route
-            path="/trade"
-            element={
-              <div className="flex min-h-screen bg-slate-950 text-white">
-                <Sidebar />
-                <main className="min-w-0 flex-1">
-                  <Trade />
-                </main>
-              </div>
-            }
-          />
-
-          {/* WALLET VAULT */}
-          <Route
-            path="/wallet"
-            element={
-              <div className="flex min-h-screen bg-slate-950 text-white">
-                <Sidebar />
-                <main className="min-w-0 flex-1">
-                  <Wallet />
-                </main>
-              </div>
-            }
-          />
-
-          {/* ORDER BLOTTER */}
-          <Route
-            path="/orders"
-            element={
-              <div className="flex min-h-screen bg-slate-950 text-white">
-                <Sidebar />
-                <main className="min-w-0 flex-1">
-                  <Orders />
-                </main>
-              </div>
-            }
-          />
-
-          {/* PROFILE & SECURITY */}
-          <Route
-            path="/profile"
-            element={
-              <div className="flex min-h-screen bg-slate-950 text-white">
-                <Sidebar />
-                <main className="min-w-0 flex-1">
-                  <Profile />
-                </main>
-              </div>
-            }
-          />
-
-          {/* SETTINGS REDIRECT */}
+          <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
+          <Route path="/market" element={<AppLayout><Market /></AppLayout>} />
+          <Route path="/trade" element={<AppLayout><Trade /></AppLayout>} />
+          <Route path="/wallet" element={<AppLayout><Wallet /></AppLayout>} />
+          <Route path="/orders" element={<AppLayout><Orders /></AppLayout>} />
+          <Route path="/profile" element={<AppLayout><Profile /></AppLayout>} />
           <Route path="/settings" element={<Navigate to="/profile" replace />} />
-
-          {/* 24/7 SUPPORT & AI */}
-          <Route
-            path="/support"
-            element={
-              <div className="flex min-h-screen bg-slate-950 text-white">
-                <Sidebar />
-                <main className="min-w-0 flex-1">
-                  <Support />
-                </main>
-              </div>
-            }
-          />
-
-          {/* ADMIN PORTAL */}
-          <Route
-            path="/admin"
-            element={
-              <div className="flex min-h-screen bg-slate-950 text-white">
-                <Sidebar />
-                <main className="min-w-0 flex-1">
-                  <AdminDashboard />
-                </main>
-              </div>
-            }
-          />
+          <Route path="/support" element={<AppLayout><Support /></AppLayout>} />
+          <Route path="/admin" element={<AppLayout><AdminDashboard /></AppLayout>} />
         </Route>
 
         {/* CATCH-ALL ROUTE: GATES UNKNOWN PATHS BACK TO AUTH */}

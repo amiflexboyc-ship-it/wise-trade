@@ -43,18 +43,18 @@ function Trade() {
     <div className="min-h-screen bg-[#07090e] p-3 sm:p-5 text-white">
       <div className="mx-auto max-w-[1750px] space-y-4">
         {/* TOP STATUS BAR */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800/80 bg-[#0c101a] px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span className="flex h-2.5 w-2.5 rounded-full bg-[#0ecb81] animate-ping" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-800/80 bg-[#0c101a] p-3 sm:px-4 sm:py-3 shadow-lg">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <span className="flex h-2.5 w-2.5 rounded-full bg-[#0ecb81] animate-ping shrink-0" />
             <h1 className="text-sm sm:text-base font-bold text-white tracking-wide">
               WiseTrade Pro Terminal
             </h1>
-            <span className="rounded-md bg-[#F0B90B]/15 px-2 py-0.5 text-xs font-bold text-[#F0B90B] border border-[#F0B90B]/30">
+            <span className="rounded-md bg-[#F0B90B]/15 px-2 py-0.5 text-[10px] sm:text-xs font-bold text-[#F0B90B] border border-[#F0B90B]/30">
               High-Speed Engine
             </span>
           </div>
 
-          <div className="flex items-center gap-5 text-xs text-slate-400">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-xs text-slate-400 pt-2 border-t border-slate-800/60 sm:border-t-0 sm:pt-0">
             <div>
               <span>Available USDT: </span>
               <span className="font-mono font-bold text-[#F0B90B]">

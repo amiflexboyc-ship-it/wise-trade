@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
+import { CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { auth } from "../firebase";
 import {
   getUserWallet,
@@ -506,8 +507,14 @@ export function TradingProvider({ children }) {
             }`}
           >
             <div className="flex items-start gap-3">
-              <span className="text-xl">
-                {toast.type === "success" ? "✅" : toast.type === "error" ? "⚠️" : "ℹ️"}
+              <span className="shrink-0 mt-0.5">
+                {toast.type === "success" ? (
+                  <CheckCircle2 size={18} className="text-[#0ecb81]" />
+                ) : toast.type === "error" ? (
+                  <AlertTriangle size={18} className="text-[#f6465d]" />
+                ) : (
+                  <Info size={18} className="text-[#F0B90B]" />
+                )}
               </span>
               <div className="flex-1">
                 {toast.title && <p className="font-semibold text-sm mb-0.5">{toast.title}</p>}

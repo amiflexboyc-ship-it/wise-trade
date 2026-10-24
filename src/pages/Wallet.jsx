@@ -214,7 +214,71 @@ function Wallet() {
             </span>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* MOBILE ASSET CARDS (Visible only on < md screens) */}
+          <div className="divide-y divide-slate-800/60 md:hidden">
+            {assetsList.map((coin) => {
+              const pct = getPercentage(coin.value);
+              return (
+                <div key={coin.symbol} className="p-4 space-y-3 hover:bg-slate-800/20 transition">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800 font-black text-[#F0B90B] text-xs border border-slate-700">
+                        {coin.symbol.slice(0, 3)}
+                      </div>
+                      <div>
+                        <span className="font-bold text-white text-sm block">{coin.symbol}</span>
+                        <span className="text-[11px] text-slate-500">{coin.name}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleTradeAsset(coin.symbol)}
+                      className="rounded-xl bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#F0B90B] hover:text-black transition border border-slate-700 hover:border-[#F0B90B]"
+                    >
+                      {coin.symbol === "USDT" ? "Deposit" : "Trade"}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 bg-[#121724] p-2.5 rounded-xl border border-slate-800/80 text-xs font-mono">
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-sans">Holding</p>
+                      <p className="text-white font-bold tabular-nums mt-0.5">
+                        {coin.amount.toFixed(coin.symbol === "USDT" || coin.symbol === "DOGE" ? 2 : 4)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-sans">Price</p>
+                      <p className="text-slate-300 tabular-nums mt-0.5">
+                        ${coin.isStable ? "1.00" : coin.price.toLocaleString(undefined, { minimumFractionDigits: coin.price > 10 ? 2 : 4 })}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-slate-500 font-sans">Valuation</p>
+                      <p className="text-[#F0B90B] font-bold tabular-nums mt-0.5">
+                        ${formatMoney(coin.value)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-[#F0B90B]"
+                        style={{ width: `${Math.min(100, Math.max(1, pct))}%` }}
+                      />
+                    </div>
+                    <span className="font-mono text-slate-400 text-[10px] shrink-0">
+                      {pct.toFixed(1)}% of portfolio
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* DESKTOP TABLE VIEW (Visible on >= md screens) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full min-w-[850px] text-left text-xs">
               <thead className="border-b border-slate-800/80 bg-[#090d16] text-slate-400 uppercase font-semibold">
                 <tr>

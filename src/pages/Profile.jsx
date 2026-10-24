@@ -37,7 +37,7 @@ function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07090e] p-4 sm:p-6 lg:p-8 text-white">
+    <div className="min-h-screen bg-[#07090e] p-3 sm:p-6 lg:p-8 text-white">
       <div className="mx-auto max-w-5xl space-y-6">
         {/* HEADER */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800/80 pb-6">
@@ -198,7 +198,7 @@ function Profile() {
           <p className="text-xs text-slate-400 mb-4">Security audit log of IP addresses and browser sessions</p>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
+            <table className="w-full text-left text-xs font-mono min-w-[500px]">
               <thead className="text-slate-500 uppercase border-b border-slate-800">
                 <tr>
                   <th className="py-2.5">Date & Time</th>
@@ -212,13 +212,23 @@ function Profile() {
                   <td className="py-3 text-slate-300">Just now</td>
                   <td className="py-3 text-white">192.168.43.171</td>
                   <td className="py-3 text-slate-400">Windows Chrome 128.0</td>
-                  <td className="py-3 text-[#0ecb81]">● Authorized</td>
+                  <td className="py-3 text-[#0ecb81]">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#0ecb81]" />
+                      <span>Authorized</span>
+                    </span>
+                  </td>
                 </tr>
                 <tr>
                   <td className="py-3 text-slate-400">Yesterday, 14:22</td>
                   <td className="py-3 text-slate-300">102.89.44.12</td>
                   <td className="py-3 text-slate-400">Windows Chrome 128.0</td>
-                  <td className="py-3 text-[#0ecb81]">● Authorized</td>
+                  <td className="py-3 text-[#0ecb81]">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#0ecb81]" />
+                      <span>Authorized</span>
+                    </span>
+                  </td>
                 </tr>
               </tbody>
             </table>

@@ -100,7 +100,10 @@ const Footer = () => {
               </button>
             </form>
             {subscribed && (
-              <p className="text-[#0ecb81] text-[11px]">✓ Subscribed to WiseTrade Intel.</p>
+              <p className="text-[#0ecb81] text-[11px] flex items-center gap-1.5">
+                <Check size={12} />
+                <span>Subscribed to WiseTrade Intel.</span>
+              </p>
             )}
           </div>
         </div>

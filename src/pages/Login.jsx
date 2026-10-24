@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 import { useTrading } from "../context/TradingContext";
-import { Lock, Mail, ShieldCheck, ArrowRight } from "lucide-react";
+import { Lock, Mail, ShieldCheck, ArrowRight, Zap } from "lucide-react";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -146,7 +146,8 @@ function Login() {
           }}
           className="w-full rounded-xl bg-gradient-to-r from-emerald-500/20 via-emerald-500/10 to-emerald-500/20 py-3 text-xs font-bold text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/25 transition flex items-center justify-center gap-2 cursor-pointer shadow-lg"
         >
-          <span>⚡ Instant 1-Click Sandbox Demo ($10,000 Portfolio)</span>
+          <Zap size={14} className="text-emerald-400" />
+          <span>Instant 1-Click Sandbox Demo ($10,000 Portfolio)</span>
         </button>
 
         <div className="pt-2 text-center text-xs text-slate-400 border-t border-slate-800/80">
