@@ -121,11 +121,14 @@ function Support() {
     setSending(true);
 
     try {
-      // 1. Try backend server if available with short timeout
+      // 1. Try server endpoint (Vercel serverless /api or configured VITE_API_URL / local proxy)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-      const res = await fetch("http://127.0.0.1:5000/api/support/chat", {
+      const baseUrl = (import.meta.env.VITE_API_URL || "").trim().replace(/\/+$/, "");
+      const endpoint = baseUrl ? `${baseUrl}/api/support/chat` : "/api/support/chat";
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text }),
