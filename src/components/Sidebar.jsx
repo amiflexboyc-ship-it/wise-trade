@@ -258,6 +258,20 @@ function Sidebar() {
             <LogOut size={15} />
             <span>Sign Out</span>
           </button>
+
+          {/* REGULATORY COMPLIANCE & LEGAL LINKS */}
+          <div className="mt-3 pt-3 border-t border-slate-800/60 text-[10px] text-slate-500 space-y-1.5">
+            <p className="leading-tight text-slate-400 font-medium">
+              Trading involves risk of loss; not financial advice.
+            </p>
+            <div className="flex items-center justify-between text-slate-500">
+              <Link to="/terms" className="hover:text-[#F0B90B] transition">Terms</Link>
+              <span>•</span>
+              <Link to="/privacy" className="hover:text-[#F0B90B] transition">Privacy</Link>
+              <span>•</span>
+              <Link to="/risk-disclaimer" className="hover:text-[#F0B90B] transition">Risk</Link>
+            </div>
+          </div>
         </div>
       </aside>
     </>

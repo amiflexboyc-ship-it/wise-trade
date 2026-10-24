@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import TradingChart from "../components/TradingChart";
 import TradePanel from "../components/TradePanel";
 import OrderBook from "../components/OrderBook";
@@ -6,7 +7,7 @@ import RecentTrades from "../components/RecentTrades";
 import OrderHistory from "../components/OrderHistory";
 import { useTrading } from "../context/TradingContext";
 import { getMarketPrices } from "../Services/MarketApi";
-import { Layers, Activity, BookOpen, Clock } from "lucide-react";
+import { Layers, Activity, BookOpen, Clock, AlertTriangle } from "lucide-react";
 
 function Trade() {
   const { selectedSymbol, wallet } = useTrading();
@@ -67,6 +68,30 @@ function Trade() {
                 {assetBal.toFixed(asset === "BTC" || asset === "ETH" ? 6 : 4)} {asset}
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* REGULATORY COMPLIANCE & RISK DISCLAIMER TICKER */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3.5 py-2 text-xs text-amber-300">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={15} className="text-amber-400 shrink-0" />
+            <span className="font-bold tracking-tight">
+              Trading involves risk of loss; not financial advice.
+            </span>
+            <span className="text-amber-200/70 text-[11px] hidden md:inline">
+              WiseTrade simulates paper-trading capital for educational strategy testing with live Binance data.
+            </span>
+          </div>
+          <div className="flex items-center gap-3 shrink-0 text-[11px] self-end sm:self-auto">
+            <Link to="/risk-disclaimer" className="underline hover:text-white transition font-medium">
+              Risk Disclosure
+            </Link>
+            <Link to="/terms" className="underline hover:text-white transition font-medium">
+              Terms
+            </Link>
+            <Link to="/privacy" className="underline hover:text-white transition font-medium">
+              Privacy
+            </Link>
           </div>
         </div>
 

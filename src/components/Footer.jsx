@@ -111,7 +111,9 @@ const Footer = () => {
         {/* Risk Disclaimer */}
         <div className="border-t border-slate-800/80 mt-12 pt-6 text-[11px] text-slate-500 leading-relaxed">
           <p>
-            <strong className="text-slate-400 font-semibold">Simulated Paper Trading Disclaimer:</strong> WiseTrade is a simulated cryptocurrency paper trading platform designed for education and strategy testing. All transactions, deposits, order executions, and portfolio balances are simulated with no real fiat or cryptocurrency financial risk. Real-time market prices are streamed from public cryptocurrency exchange feeds.
+            <strong className="text-amber-400/90 font-bold uppercase tracking-wider">Risk Disclaimer:</strong>{" "}
+            <span className="text-slate-300 font-semibold">Trading involves risk of loss; not financial advice.</span>{" "}
+            WiseTrade is a simulated cryptocurrency paper trading platform designed for education and strategy testing. All transactions, deposits, order executions, and portfolio balances are simulated with zero real fiat or cryptocurrency financial risk. Real-time market prices are streamed from public exchange feeds.
           </p>
         </div>
 

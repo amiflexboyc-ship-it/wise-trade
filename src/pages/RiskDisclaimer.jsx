@@ -31,14 +31,13 @@ export default function RiskDisclaimer() {
         </div>
 
         {/* Highlight Alert Box */}
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-6 sm:p-8 space-y-3">
-          <h2 className="text-base font-bold text-red-400 flex items-center gap-2">
-            <ShieldAlert size={20} className="text-red-400" />
-            No Financial, Investment, or Trading Advice
-          </h2>
-          <p className="text-xs text-red-200/90 leading-relaxed">
-            Nothing published on WiseTrade constitutes financial advice, investment recommendations, endorsement, or solicitation to buy, sell, or hold any cryptocurrency or financial instrument. 
-            All content, technical indicators, AI support suggestions, and chart layouts are provided strictly for informational and educational simulation purposes.
+        <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-6 sm:p-8 space-y-3">
+          <div className="flex items-center gap-2 text-red-400 font-black text-lg sm:text-xl tracking-tight">
+            <ShieldAlert size={24} className="text-red-400 shrink-0" />
+            <span>Trading involves risk of loss; not financial advice.</span>
+          </div>
+          <p className="text-xs sm:text-sm text-red-200/90 leading-relaxed font-medium">
+            Nothing published, displayed, or calculated on WiseTrade constitutes financial advice, investment recommendations, or an endorsement to trade digital assets. All simulated portfolio credits, order executions, AI suggestions, and indicators are strictly for educational simulation and strategy experimentation.
           </p>
         </div>
 
