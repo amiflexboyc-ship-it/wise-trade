@@ -9,6 +9,7 @@ import {
   getUserOrders,
   saveWalletTransaction,
   getWalletTransactions,
+  saveUserProfile,
 } from "../Services/firestoreService";
 
 const TradingContext = createContext(null);
@@ -170,6 +171,13 @@ export function TradingProvider({ children }) {
         localStorage.removeItem("wisetrade_demo_user");
 
         try {
+          await saveUserProfile(currentUser.uid, {
+            email: currentUser.email,
+            displayName: currentUser.displayName || currentUser.email?.split("@")[0] || "Trader",
+            emailVerified: currentUser.emailVerified,
+            lastLogin: new Date().toISOString(),
+          });
+
           const userWallet = await getUserWallet(currentUser.uid);
           const userOrders = await getUserOrders(currentUser.uid);
           const userTransactions = await getWalletTransactions(currentUser.uid);
@@ -254,7 +262,7 @@ export function TradingProvider({ children }) {
     notify("Account balances and seed data reset to default 10,000 USDT.", "success", "Reset Completed");
   }, [notify]);
 
-  // Deposit USDT
+  // Deposit USDT (Server-Verified Calculation)
   const depositUSDT = useCallback(async (amount, network = "TRC20") => {
     const depositAmount = Number(amount);
     if (!Number.isFinite(depositAmount) || depositAmount <= 0) {
@@ -262,25 +270,51 @@ export function TradingProvider({ children }) {
       return { success: false, message: "Enter a valid deposit amount." };
     }
 
-    const currentUSDT = Number(wallet?.USDT || 0);
-    const currentDeposits = Number(wallet?.totalDeposits || 0);
+    let newWallet = null;
+    let tx = null;
 
-    const newWallet = {
-      ...wallet,
-      USDT: +(currentUSDT + depositAmount).toFixed(2),
-      totalDeposits: +(currentDeposits + depositAmount).toFixed(2),
-    };
+    try {
+      const res = await fetch("/api/wallet/transact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "DEPOSIT",
+          amount: depositAmount,
+          network,
+          currentWallet: wallet,
+        }),
+      });
 
-    const tx = {
-      id: `tx-${Date.now()}`,
-      type: "DEPOSIT",
-      asset: "USDT",
-      amount: depositAmount,
-      network,
-      txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
-      status: "COMPLETED",
-      createdAt: new Date(),
-    };
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.updatedWallet) {
+          newWallet = data.updatedWallet;
+          tx = { ...data.transaction, createdAt: new Date() };
+        }
+      }
+    } catch {
+      // Offline fallback
+    }
+
+    if (!newWallet) {
+      const currentUSDT = Number(wallet?.USDT || 0);
+      const currentDeposits = Number(wallet?.totalDeposits || 0);
+      newWallet = {
+        ...wallet,
+        USDT: +(currentUSDT + depositAmount).toFixed(2),
+        totalDeposits: +(currentDeposits + depositAmount).toFixed(2),
+      };
+      tx = {
+        id: `tx-${Date.now()}`,
+        type: "DEPOSIT",
+        asset: "USDT",
+        amount: depositAmount,
+        network,
+        txHash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
+        status: "COMPLETED",
+        createdAt: new Date(),
+      };
+    }
 
     setWalletState(newWallet);
     setTransactions((prev) => [tx, ...prev]);
@@ -298,7 +332,7 @@ export function TradingProvider({ children }) {
     return { success: true, message: `Successfully deposited $${depositAmount.toFixed(2)}` };
   }, [wallet, user, notify]);
 
-  // Withdraw USDT
+  // Withdraw USDT (Server-Verified Calculation)
   const withdrawUSDT = useCallback(async (amount, address = "", network = "TRC20") => {
     const withdrawAmount = Number(amount);
     if (!Number.isFinite(withdrawAmount) || withdrawAmount <= 0) {
@@ -306,29 +340,56 @@ export function TradingProvider({ children }) {
       return { success: false, message: "Enter a valid withdrawal amount." };
     }
 
-    const currentUSDT = Number(wallet?.USDT || 0);
-    if (withdrawAmount > currentUSDT) {
-      notify("Insufficient available USDT balance.", "error", "Withdrawal Failed");
-      return { success: false, message: "Insufficient USDT balance." };
+    let newWallet = null;
+    let tx = null;
+
+    try {
+      const res = await fetch("/api/wallet/transact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "WITHDRAW",
+          amount: withdrawAmount,
+          address,
+          network,
+          currentWallet: wallet,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        notify(data.error || "Withdrawal failed on server validation.", "error", "Withdrawal Error");
+        return { success: false, message: data.error };
+      }
+
+      newWallet = data.updatedWallet;
+      tx = { ...data.transaction, createdAt: new Date() };
+    } catch {
+      // Offline fallback
+      const currentUSDT = Number(wallet?.USDT || 0);
+      if (withdrawAmount > currentUSDT) {
+        notify("Insufficient available USDT balance.", "error", "Withdrawal Failed");
+        return { success: false, message: "Insufficient USDT balance." };
+      }
+
+      const currentWithdrawals = Number(wallet?.totalWithdrawals || 0);
+      newWallet = {
+        ...wallet,
+        USDT: +(currentUSDT - withdrawAmount).toFixed(2),
+        totalWithdrawals: +(currentWithdrawals + withdrawAmount).toFixed(2),
+      };
+
+      tx = {
+        id: `tx-${Date.now()}`,
+        type: "WITHDRAW",
+        asset: "USDT",
+        amount: withdrawAmount,
+        destination: address || "External Address",
+        network,
+        status: "COMPLETED",
+        createdAt: new Date(),
+      };
     }
-
-    const currentWithdrawals = Number(wallet?.totalWithdrawals || 0);
-    const newWallet = {
-      ...wallet,
-      USDT: +(currentUSDT - withdrawAmount).toFixed(2),
-      totalWithdrawals: +(currentWithdrawals + withdrawAmount).toFixed(2),
-    };
-
-    const tx = {
-      id: `tx-${Date.now()}`,
-      type: "WITHDRAW",
-      asset: "USDT",
-      amount: withdrawAmount,
-      destination: address || "External Address",
-      network,
-      status: "COMPLETED",
-      createdAt: new Date(),
-    };
 
     setWalletState(newWallet);
     setTransactions((prev) => [tx, ...prev]);
@@ -346,45 +407,74 @@ export function TradingProvider({ children }) {
     return { success: true, message: `Successfully withdrew $${withdrawAmount.toFixed(2)}` };
   }, [wallet, user, notify]);
 
-  // Instant Buy Asset
+  // Instant Buy Asset (Server-Side Calculations & Protection)
   const buyAsset = useCallback(async (symbol, amount, price) => {
     const asset = symbol.replace("USDT", "");
     const quantity = Number(amount);
     const assetPrice = Number(price);
-    const subtotal = quantity * assetPrice;
-    const fee = +(subtotal * 0.001).toFixed(2); // 0.1% fee
-    const total = subtotal + fee;
 
     if (quantity <= 0 || assetPrice <= 0) {
       notify("Invalid order quantity or price.", "error", "Order Rejected");
       return { success: false, message: "Invalid quantity or price." };
     }
 
-    const usdtBalance = Number(wallet?.USDT || 0);
-    if (total > usdtBalance) {
-      notify(`Insufficient USDT balance. Needed $${total.toFixed(2)}, Available: $${usdtBalance.toFixed(2)}`, "error", "Insufficient Balance");
-      return { success: false, message: "Insufficient USDT balance." };
+    let order = null;
+    let newWallet = null;
+
+    try {
+      // 1. Authoritative Server-side Execution
+      const res = await fetch("/api/trade/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          side: "BUY",
+          symbol,
+          amount: quantity,
+          price: assetPrice,
+          currentWallet: wallet,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        notify(data.error || "Order rejected by server validation.", "error", "Order Rejected");
+        return { success: false, message: data.error };
+      }
+
+      order = { ...data.order, createdAt: new Date() };
+      newWallet = data.updatedWallet;
+    } catch {
+      // Offline fallback
+      const subtotal = quantity * assetPrice;
+      const fee = +(subtotal * 0.001).toFixed(2);
+      const total = subtotal + fee;
+
+      const usdtBalance = Number(wallet?.USDT || 0);
+      if (total > usdtBalance) {
+        notify(`Insufficient USDT balance. Needed $${total.toFixed(2)}, Available: $${usdtBalance.toFixed(2)}`, "error", "Insufficient Balance");
+        return { success: false, message: "Insufficient USDT balance." };
+      }
+
+      const currentAssetBalance = Number(wallet?.[asset] || 0);
+      newWallet = {
+        ...wallet,
+        USDT: +(usdtBalance - total).toFixed(2),
+        [asset]: +(currentAssetBalance + quantity).toFixed(6),
+      };
+
+      order = {
+        id: `ord-${Date.now()}`,
+        side: "BUY",
+        symbol: `${asset}/USDT`,
+        asset,
+        amount: quantity,
+        price: assetPrice,
+        fee,
+        total: +total.toFixed(2),
+        status: "COMPLETED",
+        createdAt: new Date(),
+      };
     }
-
-    const currentAssetBalance = Number(wallet?.[asset] || 0);
-    const newWallet = {
-      ...wallet,
-      USDT: +(usdtBalance - total).toFixed(2),
-      [asset]: +(currentAssetBalance + quantity).toFixed(6),
-    };
-
-    const order = {
-      id: `ord-${Date.now()}`,
-      side: "BUY",
-      symbol: `${asset}/USDT`,
-      asset,
-      amount: quantity,
-      price: assetPrice,
-      fee,
-      total: +total.toFixed(2),
-      status: "COMPLETED",
-      createdAt: new Date(),
-    };
 
     setWalletState(newWallet);
     setOrders((prev) => [order, ...prev]);
@@ -402,45 +492,74 @@ export function TradingProvider({ children }) {
     return { success: true, message: `Bought ${quantity} ${asset} successfully.` };
   }, [wallet, user, notify]);
 
-  // Instant Sell Asset
+  // Instant Sell Asset (Server-Side Calculations & Protection)
   const sellAsset = useCallback(async (symbol, amount, price) => {
     const asset = symbol.replace("USDT", "");
     const quantity = Number(amount);
     const assetPrice = Number(price);
-    const subtotal = quantity * assetPrice;
-    const fee = +(subtotal * 0.001).toFixed(2);
-    const total = subtotal - fee;
 
     if (quantity <= 0 || assetPrice <= 0) {
       notify("Invalid order quantity or price.", "error", "Order Rejected");
       return { success: false, message: "Invalid quantity or price." };
     }
 
-    const currentAssetBalance = Number(wallet?.[asset] || 0);
-    if (quantity > currentAssetBalance) {
-      notify(`Insufficient ${asset} balance. You have ${currentAssetBalance.toFixed(6)} ${asset}`, "error", "Insufficient Balance");
-      return { success: false, message: `Insufficient ${asset} balance.` };
+    let order = null;
+    let newWallet = null;
+
+    try {
+      // 1. Authoritative Server-side Execution
+      const res = await fetch("/api/trade/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          side: "SELL",
+          symbol,
+          amount: quantity,
+          price: assetPrice,
+          currentWallet: wallet,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        notify(data.error || "Order rejected by server validation.", "error", "Order Rejected");
+        return { success: false, message: data.error };
+      }
+
+      order = { ...data.order, createdAt: new Date() };
+      newWallet = data.updatedWallet;
+    } catch {
+      // Offline fallback
+      const subtotal = quantity * assetPrice;
+      const fee = +(subtotal * 0.001).toFixed(2);
+      const total = subtotal - fee;
+
+      const currentAssetBalance = Number(wallet?.[asset] || 0);
+      if (quantity > currentAssetBalance) {
+        notify(`Insufficient ${asset} balance. You have ${currentAssetBalance.toFixed(6)} ${asset}`, "error", "Insufficient Balance");
+        return { success: false, message: `Insufficient ${asset} balance.` };
+      }
+
+      const usdtBalance = Number(wallet?.USDT || 0);
+      newWallet = {
+        ...wallet,
+        [asset]: +(currentAssetBalance - quantity).toFixed(6),
+        USDT: +(usdtBalance + total).toFixed(2),
+      };
+
+      order = {
+        id: `ord-${Date.now()}`,
+        side: "SELL",
+        symbol: `${asset}/USDT`,
+        asset,
+        amount: quantity,
+        price: assetPrice,
+        fee,
+        total: +total.toFixed(2),
+        status: "COMPLETED",
+        createdAt: new Date(),
+      };
     }
-
-    const usdtBalance = Number(wallet?.USDT || 0);
-    const newWallet = {
-      ...wallet,
-      [asset]: +(currentAssetBalance - quantity).toFixed(6),
-      USDT: +(usdtBalance + total).toFixed(2),
-    };
-
-    const order = {
-      id: `ord-${Date.now()}`,
-      side: "SELL",
-      symbol: `${asset}/USDT`,
-      asset,
-      amount: quantity,
-      price: assetPrice,
-      fee,
-      total: +total.toFixed(2),
-      status: "COMPLETED",
-      createdAt: new Date(),
-    };
 
     setWalletState(newWallet);
     setOrders((prev) => [order, ...prev]);
@@ -454,7 +573,7 @@ export function TradingProvider({ children }) {
       }
     }
 
-    notify(`Sold ${quantity} ${asset} for $${total.toLocaleString()} USDT`, "success", "Order Filled");
+    notify(`Sold ${quantity} ${asset} for $${order.total.toLocaleString()} USDT`, "success", "Order Filled");
     return { success: true, message: `Sold ${quantity} ${asset} successfully.` };
   }, [wallet, user, notify]);
 

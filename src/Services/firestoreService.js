@@ -16,6 +16,39 @@ import {
 import { db } from "../firebase";
 
 // ==========================================
+// USER PROFILE DATABASE OPERATIONS
+// ==========================================
+
+export async function getUserProfile(userId) {
+  try {
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      return userSnap.data();
+    }
+  } catch (err) {
+    console.warn("Firestore getUserProfile error:", err);
+  }
+  return null;
+}
+
+export async function saveUserProfile(userId, profileData) {
+  try {
+    const userRef = doc(db, "users", userId);
+    await setDoc(
+      userRef,
+      {
+        ...profileData,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  } catch (err) {
+    console.warn("Firestore saveUserProfile error:", err);
+  }
+}
+
+// ==========================================
 // GET USER WALLET
 // ==========================================
 

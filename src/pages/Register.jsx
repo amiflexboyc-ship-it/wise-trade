@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "../firebase";
 import { useTrading } from "../context/TradingContext";
 import { Lock, Mail, ShieldCheck, ArrowRight, CheckCircle2, Zap } from "lucide-react";
@@ -9,6 +9,7 @@ function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,6 +27,11 @@ function Register() {
     e.preventDefault();
     setErrorMsg("");
 
+    if (!agreeTerms) {
+      setErrorMsg("You must accept the Terms of Service and Privacy Policy to create an account.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorMsg("Passwords do not match. Please re-enter.");
       return;
@@ -39,8 +45,19 @@ function Register() {
     setLoading(true);
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      notify("Account created successfully! Welcome to WiseTrade.", "success");
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Dispatch email verification
+      try {
+        if (userCred.user) {
+          await sendEmailVerification(userCred.user);
+          notify("Account created! A verification email has been sent to your inbox.", "success", "Welcome to WiseTrade");
+        }
+      } catch (verifyErr) {
+        console.warn("Could not dispatch verification email automatically:", verifyErr.message);
+        notify("Account created successfully! Welcome to WiseTrade.", "success");
+      }
+
       navigate("/dashboard");
     } catch (error) {
       console.warn("Registration error:", error);
@@ -156,6 +173,31 @@ function Register() {
                 className="w-full rounded-xl border border-slate-800 bg-[#121724] py-3 pl-10 pr-4 text-xs text-white outline-none focus:border-[#F0B90B] transition"
               />
             </div>
+          </div>
+
+          <div className="flex items-start gap-2 pt-1 text-[11px] text-slate-400">
+            <input
+              id="agreeTerms"
+              type="checkbox"
+              checked={agreeTerms}
+              onChange={(e) => setAgreeTerms(e.target.checked)}
+              className="mt-0.5 rounded border-slate-700 bg-slate-900 text-[#F0B90B] focus:ring-[#F0B90B] accent-[#F0B90B]"
+            />
+            <label htmlFor="agreeTerms" className="cursor-pointer leading-tight">
+              I agree to the{" "}
+              <Link to="/terms" target="_blank" className="text-[#F0B90B] hover:underline font-semibold">
+                Terms of Service
+              </Link>
+              ,{" "}
+              <Link to="/privacy" target="_blank" className="text-[#F0B90B] hover:underline font-semibold">
+                Privacy Policy
+              </Link>
+              , and acknowledge the{" "}
+              <Link to="/risk-disclaimer" target="_blank" className="text-slate-300 hover:underline font-semibold">
+                Paper Trading Risk Disclaimer
+              </Link>
+              .
+            </label>
           </div>
 
           <button

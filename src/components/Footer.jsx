@@ -119,11 +119,10 @@ const Footer = () => {
         <div className="border-t border-slate-800/50 mt-6 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-500 text-xs">
           <p>© 2026 WiseTrade Inc. All rights reserved.</p>
 
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-[#F0B90B] transition">Terms of Service</a>
-            <a href="#" className="hover:text-[#F0B90B] transition">Privacy Policy</a>
-            <a href="#" className="hover:text-[#F0B90B] transition">Cookie Policy</a>
-            <a href="#" className="hover:text-[#F0B90B] transition">API Agreement</a>
+          <div className="flex flex-wrap gap-6">
+            <Link to="/terms" className="hover:text-[#F0B90B] transition">Terms of Service</Link>
+            <Link to="/privacy" className="hover:text-[#F0B90B] transition">Privacy Policy</Link>
+            <Link to="/risk-disclaimer" className="hover:text-[#F0B90B] transition">Risk Disclaimer</Link>
           </div>
         </div>
       </div>

@@ -15,6 +15,9 @@ import Market from "./pages/Market";
 import Trade from "./pages/Trade";
 import Wallet from "./pages/Wallet";
 import Profile from "./pages/Profile";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import RiskDisclaimer from "./pages/RiskDisclaimer";
 
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -88,10 +91,13 @@ function App() {
         <Route path="/landing" element={<LandingPage />} />
 
         {/* ========================================= */}
-        {/* AUTHENTICATION ROUTES */}
+        {/* AUTHENTICATION & LEGAL ROUTES */}
         {/* ========================================= */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/risk-disclaimer" element={<RiskDisclaimer />} />
 
         {/* ========================================= */}
         {/* PROTECTED ROUTES (STRICT LOGIN REQUIRED) */}

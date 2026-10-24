@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase";
 import { useTrading } from "../context/TradingContext";
-import { Lock, Mail, ShieldCheck, ArrowRight, Zap } from "lucide-react";
+import { Lock, Mail, ShieldCheck, ArrowRight, Zap, KeyRound, CheckCircle2, ArrowLeft } from "lucide-react";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
 
   const navigate = useNavigate();
   const { user, notify, loginAsDemo } = useTrading();
@@ -24,6 +27,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+    setSuccessMsg("");
     setLoading(true);
 
     try {
@@ -37,6 +41,35 @@ function Login() {
         msg = "Invalid email or password. Please check your credentials or create a new account.";
       } else if (error.code === "auth/too-many-requests") {
         msg = "Access temporarily disabled due to too many failed attempts. Please try again later.";
+      }
+      setErrorMsg(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+    const targetEmail = (resetEmail || email).trim();
+    if (!targetEmail) {
+      setErrorMsg("Please enter your registered email address.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, targetEmail);
+      setSuccessMsg(`Password reset instructions sent to ${targetEmail}. Please check your inbox or spam folder.`);
+      notify("Password reset email sent!", "success");
+    } catch (error) {
+      console.warn("Password reset error:", error);
+      let msg = "Could not send password reset email. Please verify the address.";
+      if (error.code === "auth/user-not-found") {
+        msg = "No account found with this email address.";
+      } else if (error.code === "auth/invalid-email") {
+        msg = "Please enter a valid email address.";
       }
       setErrorMsg(msg);
     } finally {
@@ -75,60 +108,129 @@ function Login() {
           <span>Encrypted 256-Bit SSL Institutional Gate</span>
         </div>
 
-        {/* Error message */}
+        {/* Alerts */}
         {errorMsg && (
           <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-400 leading-relaxed">
             {errorMsg}
           </div>
         )}
-
-        {/* FORM */}
-        <form onSubmit={handleLogin} className="space-y-4 text-xs">
-          <div>
-            <label className="text-slate-300 font-semibold mb-1 block" htmlFor="email">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full rounded-xl border border-slate-800 bg-[#121724] py-3 pl-10 pr-4 text-xs text-white outline-none focus:border-[#F0B90B] transition"
-              />
-            </div>
+        {successMsg && (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-400 leading-relaxed flex items-start gap-2">
+            <CheckCircle2 size={16} className="shrink-0 text-emerald-400 mt-0.5" />
+            <span>{successMsg}</span>
           </div>
+        )}
 
-          <div>
-            <label className="text-slate-300 font-semibold mb-1 block" htmlFor="password">
-              Password
-            </label>
-            <div className="relative">
-              <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full rounded-xl border border-slate-800 bg-[#121724] py-3 pl-10 pr-4 text-xs text-white outline-none focus:border-[#F0B90B] transition"
-              />
+        {showForgot ? (
+          /* FORGOT PASSWORD FORM */
+          <form onSubmit={handlePasswordReset} className="space-y-4 text-xs">
+            <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-3 text-[11px] text-slate-300 leading-relaxed">
+              Enter your registered account email. We will send you an official Firebase password reset link to safely choose a new password.
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-[#F0B90B] py-3.5 text-xs font-black text-black hover:bg-[#fcd535] transition shadow-lg shadow-[#F0B90B]/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <span>{loading ? "Authenticating..." : "Sign In to Account"}</span>
-            <ArrowRight size={14} />
-          </button>
-        </form>
+            <div>
+              <label className="text-slate-300 font-semibold mb-1 block" htmlFor="resetEmail">
+                Registered Email Address
+              </label>
+              <div className="relative">
+                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  id="resetEmail"
+                  type="email"
+                  required
+                  value={resetEmail || email}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="w-full rounded-xl border border-slate-800 bg-[#121724] py-3 pl-10 pr-4 text-xs text-white outline-none focus:border-[#F0B90B] transition"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-[#F0B90B] py-3.5 text-xs font-black text-black hover:bg-[#fcd535] transition shadow-lg shadow-[#F0B90B]/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <KeyRound size={15} />
+              <span>{loading ? "Sending Reset Email..." : "Send Password Reset Link"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowForgot(false);
+                setErrorMsg("");
+                setSuccessMsg("");
+              }}
+              className="w-full text-center text-xs text-slate-400 hover:text-white flex items-center justify-center gap-1.5 py-1"
+            >
+              <ArrowLeft size={13} />
+              <span>Back to Sign In</span>
+            </button>
+          </form>
+        ) : (
+          /* STANDARD LOGIN FORM */
+          <form onSubmit={handleLogin} className="space-y-4 text-xs">
+            <div>
+              <label className="text-slate-300 font-semibold mb-1 block" htmlFor="email">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="w-full rounded-xl border border-slate-800 bg-[#121724] py-3 pl-10 pr-4 text-xs text-white outline-none focus:border-[#F0B90B] transition"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-slate-300 font-semibold" htmlFor="password">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgot(true);
+                    setResetEmail(email);
+                    setErrorMsg("");
+                    setSuccessMsg("");
+                  }}
+                  className="text-[11px] text-[#F0B90B] hover:underline font-semibold"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative">
+                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full rounded-xl border border-slate-800 bg-[#121724] py-3 pl-10 pr-4 text-xs text-white outline-none focus:border-[#F0B90B] transition"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-[#F0B90B] py-3.5 text-xs font-black text-black hover:bg-[#fcd535] transition shadow-lg shadow-[#F0B90B]/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>{loading ? "Authenticating..." : "Sign In to Account"}</span>
+              <ArrowRight size={14} />
+            </button>
+          </form>
+        )}
 
         <div className="relative flex items-center justify-center">
           <div className="w-full border-t border-slate-800" />
